@@ -1,0 +1,65 @@
+name: Test & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Ein laufender Deploy darf nicht von einem neueren ueberholt werden.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Pruefen und bauen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Die Reihenfolge ist Absicht: schnelle Pruefungen zuerst, damit ein
+      # Tippfehler nicht erst nach dem Build auffaellt.
+      - name: Typen pruefen
+        run: npm run typecheck
+
+      - name: Linten
+        run: npm run lint
+
+      - name: Unit-Tests
+        run: npm test
+
+      - name: Bauen
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Auf GitHub Pages veroeffentlichen
+    # Pull Requests werden geprueft, aber nicht veroeffentlicht.
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

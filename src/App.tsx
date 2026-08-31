@@ -19,15 +19,14 @@ import {
  * Er wird in Schritt 5 durch die eigentlichen Bahnen ersetzt.
  */
 export function App() {
-  const [standalone, setStandalone] = useState(false)
-  const [ios, setIos] = useState(false)
+  // Reine Abfragen, die sich zur Laufzeit nicht aendern - als Startwert statt im Effekt.
+  const [standalone] = useState(isStandalone)
+  const [ios] = useState(isIos)
+
   const [persistence, setPersistence] = useState<PersistenceResult | null>(null)
   const [usage, setUsage] = useState<StorageUsage | null>(null)
 
   useEffect(() => {
-    setStandalone(isStandalone())
-    setIos(isIos())
-
     void (async () => {
       const result = await requestPersistentStorage()
       setPersistence(result)
