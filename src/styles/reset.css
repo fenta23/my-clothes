@@ -1,0 +1,83 @@
+/* Kompakter Reset, zugeschnitten auf eine iOS-Home-Screen-App. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+
+  /* Gummiband-Overscroll abschalten: in einer Standalone-App wirkt es wie ein Fehler. */
+  overscroll-behavior: none;
+
+  /* Long-Press auf Karten darf weder Safaris Callout-Menue noch eine Textauswahl
+     ausloesen - beides kollidiert mit Drag & Drop. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Eingabefelder brauchen die Textauswahl weiterhin. */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  -webkit-user-drag: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* iOS zoomt beim Fokus, wenn die Schrift kleiner als 16px ist. */
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  font-size: max(16px, 1em);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

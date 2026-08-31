@@ -1,0 +1,104 @@
+/*
+ * Die Glas-Rezeptur.
+ *
+ * Safari 26 bietet fuer Liquid Glass keine eigene CSS-Primitive, also bauen wir das
+ * Material aus vier Schichten nach:
+ *   1. halbtransparente Fuellung
+ *   2. backdrop-filter aus Blur und Saettigung (das eigentliche "Glas")
+ *   3. heller Innenrand oben als Glanzkante (specular highlight)
+ *   4. weicher Aussenschatten, der das Element von der Flaeche abhebt
+ * Dazu ein diagonaler Schimmer als Pseudo-Element.
+ */
+
+.glass {
+  position: relative;
+  isolation: isolate;
+
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+
+  border: 1px solid var(--glass-stroke);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-highlight);
+
+  border-radius: var(--r-md);
+}
+
+/* Diagonaler Schimmer. Liegt ueber der Fuellung, faengt aber keine Klicks ab. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  background: linear-gradient(
+    148deg,
+    var(--glass-sheen) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    transparent 58%
+  );
+}
+
+.glass--strong {
+  background: var(--glass-fill-strong);
+}
+
+.glass--pill {
+  border-radius: var(--r-pill);
+}
+
+.glass--lg {
+  border-radius: var(--r-lg);
+}
+
+/*
+ * Fallback fuer Browser ohne backdrop-filter. Ohne ihn waere die Fuellung so
+ * transparent, dass Text auf den Fotos unlesbar wird.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: color-mix(in srgb, var(--bg-base) 86%, white);
+  }
+
+  .glass::before {
+    display: none;
+  }
+}
+
+/*
+ * Der farbige Hintergrund, vor dem das Glas ueberhaupt erst wirkt.
+ * Liegt fix hinter allem und scrollt nicht mit.
+ */
+.appBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.appBackdrop::before,
+.appBackdrop::after {
+  content: '';
+  position: absolute;
+  width: 78vmax;
+  height: 78vmax;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+}
+
+.appBackdrop::before {
+  top: -28vmax;
+  left: -22vmax;
+  background: radial-gradient(circle at 35% 35%, var(--bg-blob-a), transparent 62%);
+}
+
+.appBackdrop::after {
+  bottom: -32vmax;
+  right: -26vmax;
+  background: radial-gradient(circle at 60% 60%, var(--bg-blob-b), transparent 62%);
+}
