@@ -73,6 +73,18 @@ function toBlob(
   })
 }
 
+/**
+ * Loest einen Blob von seiner Quelle und gibt ihn rein speicherbasiert zurueck.
+ *
+ * Notwendig, nicht kosmetisch: WebKit lehnt Blobs aus `convertToBlob` beim
+ * Schreiben in IndexedDB mit "Error preparing Blob/File data to be stored in
+ * object store" ab. Chromium speichert sie klaglos - der Fehler traete also
+ * erst auf dem iPhone auf, also genau dort, wo die App laufen soll.
+ */
+async function detachBlob(blob: Blob): Promise<Blob> {
+  return new Blob([await blob.arrayBuffer()], { type: blob.type })
+}
+
 /** Zeichnet die Bitmap in der gewuenschten Groesse und gibt sie als JPEG zurueck. */
 async function renderScaled(bitmap: ImageBitmap, maxEdge: number): Promise<Blob> {
   const size = fitWithin({ width: bitmap.width, height: bitmap.height }, maxEdge)
@@ -87,7 +99,7 @@ async function renderScaled(bitmap: ImageBitmap, maxEdge: number): Promise<Blob>
 
   context.drawImage(bitmap, 0, 0, size.width, size.height)
 
-  return toBlob(canvas, JPEG_QUALITY)
+  return detachBlob(await toBlob(canvas, JPEG_QUALITY))
 }
 
 export interface ProcessedImage {

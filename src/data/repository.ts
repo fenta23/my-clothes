@@ -11,11 +11,20 @@ import {
   type HouseholdRef,
   type Id,
   type ItemEvent,
+  type ItemImages,
 } from './types.ts'
 
 type DB = IDBPDatabase<ClothesDB>
 
 /*
+ * WICHTIG fuer alle Transaktionen in diesem Modul: die einzelnen Anfragen werden
+ * gemeinsam ueber Promise.all abgewartet, nie nacheinander mit eigenem await.
+ *
+ * Safari beendet eine IndexedDB-Transaktion, sobald die Microtask-Queue zwischen
+ * zwei Anfragen leerlaeuft. Ein `await store.add(a)` gefolgt von `await
+ * store.add(b)` schlaegt dort mit TransactionInactiveError fehl - in Chromium
+ * dagegen nicht. Das ist genau der Browser, in dem die App laufen soll.
+ *
  * Alle Schreibzugriffe laufen ueber dieses Modul. Insbesondere `moveItem` ist die
  * EINZIGE Stelle, die `householdId` setzt - nur so kann die Historie nicht umgangen
  * werden, egal ob der Wechsel per Drag & Drop, aus der Detailansicht oder beim
@@ -27,17 +36,25 @@ type DB = IDBPDatabase<ClothesDB>
 /**
  * Legt Haushalte und Startkategorien an, falls die Datenbank leer ist.
  *
- * Ist bewusst idempotent: ein zweiter Aufruf darf nichts verdoppeln, weil React im
- * StrictMode Effekte doppelt ausfuehrt.
+ * Pruefung und Anlegen liegen zwingend in EINER Transaktion.
+ *
+ * React fuehrt Effekte im StrictMode doppelt aus, und zwar ueberlappend: beide
+ * Laeufe fragen "ist die Datenbank leer?", bevor einer geschrieben hat - und beide
+ * legen an. Ergebnis waren vier Haushalte und jede Kategorie doppelt. Getrennte
+ * Aufrufe zu zaehlen und danach zu schreiben reicht deshalb nicht; IndexedDB
+ * serialisiert aber Schreibtransaktionen mit gleichem Geltungsbereich, sodass die
+ * zweite Transaktion die Eintraege der ersten sieht.
  */
 export async function seedIfEmpty(db: DB, at = Date.now()): Promise<void> {
-  const existing = await db.count('households')
-  if (existing > 0) return
-
   const tx = db.transaction(['households', 'categories'], 'readwrite')
 
-  await Promise.all(
-    DEFAULT_HOUSEHOLD_NAMES.map((name, position) =>
+  if ((await tx.objectStore('households').count()) > 0) {
+    await tx.done
+    return
+  }
+
+  await Promise.all([
+    ...DEFAULT_HOUSEHOLD_NAMES.map((name, position) =>
       tx.objectStore('households').add({
         id: newId(),
         name,
@@ -46,10 +63,7 @@ export async function seedIfEmpty(db: DB, at = Date.now()): Promise<void> {
         updatedAt: at,
       }),
     ),
-  )
-
-  await Promise.all(
-    DEFAULT_CATEGORIES.map((seed, index) =>
+    ...DEFAULT_CATEGORIES.map((seed, index) =>
       tx.objectStore('categories').add({
         id: newId(),
         name: seed.name,
@@ -60,9 +74,8 @@ export async function seedIfEmpty(db: DB, at = Date.now()): Promise<void> {
         updatedAt: at,
       }),
     ),
-  )
-
-  await tx.done
+    tx.done,
+  ])
 }
 
 // ---------------------------------------------------------------- Lesen
@@ -89,8 +102,21 @@ export async function listEvents(db: DB, itemId: Id): Promise<ItemEvent[]> {
   return events.sort((a, b) => b.timestamp - a.timestamp)
 }
 
-export async function getImages(db: DB, itemId: Id) {
-  return db.get('images', itemId)
+/**
+ * Bilder eines Kleidungsstuecks - beim Lesen wieder als Blob.
+ *
+ * Gespeichert sind ArrayBuffer (siehe StoredImages); die Umwandlung passiert hier
+ * an der Grenze, damit der Rest der App weiterhin mit Blobs arbeitet.
+ */
+export async function getImages(db: DB, itemId: Id): Promise<ItemImages | undefined> {
+  const stored = await db.get('images', itemId)
+  if (!stored) return undefined
+
+  return {
+    id: stored.id,
+    full: new Blob([stored.full], { type: stored.fullType }),
+    thumb: new Blob([stored.thumb], { type: stored.thumbType }),
+  }
 }
 
 // ---------------------------------------------------------------- Hilfen
@@ -136,20 +162,34 @@ export async function createItem(
 
   const toName = await laneName(db, input.householdId)
 
+  // Vor der Transaktion auslesen: innerhalb wuerde das Warten auf einen
+  // Nicht-IDB-Vorgang die Transaktion vorzeitig beenden.
+  const [full, thumb] = await Promise.all([
+    input.full.arrayBuffer(),
+    input.thumb.arrayBuffer(),
+  ])
+
   const tx = db.transaction(['items', 'images', 'events'], 'readwrite')
 
-  await tx.objectStore('items').add(item)
-  await tx.objectStore('images').add({ id: item.id, full: input.full, thumb: input.thumb })
-  await tx.objectStore('events').add({
-    id: newId(),
-    itemId: item.id,
-    timestamp: at,
-    kind: 'created',
-    fromName: null,
-    toName,
-  })
-
-  await tx.done
+  await Promise.all([
+    tx.objectStore('items').add(item),
+    tx.objectStore('images').add({
+      id: item.id,
+      full,
+      fullType: input.full.type,
+      thumb,
+      thumbType: input.thumb.type,
+    }),
+    tx.objectStore('events').add({
+      id: newId(),
+      itemId: item.id,
+      timestamp: at,
+      kind: 'created',
+      fromName: null,
+      toName,
+    }),
+    tx.done,
+  ])
 
   return item
 }
@@ -176,17 +216,18 @@ export async function moveItem(
 
   const tx = db.transaction(['items', 'events'], 'readwrite')
 
-  await tx.objectStore('items').put(updated)
-  await tx.objectStore('events').add({
-    id: newId(),
-    itemId,
-    timestamp: at,
-    kind: 'moved',
-    fromName,
-    toName,
-  })
-
-  await tx.done
+  await Promise.all([
+    tx.objectStore('items').put(updated),
+    tx.objectStore('events').add({
+      id: newId(),
+      itemId,
+      timestamp: at,
+      kind: 'moved',
+      fromName,
+      toName,
+    }),
+    tx.done,
+  ])
 
   return updated
 }
@@ -210,17 +251,18 @@ export async function setItemCategory(
 
   const tx = db.transaction(['items', 'events'], 'readwrite')
 
-  await tx.objectStore('items').put(updated)
-  await tx.objectStore('events').add({
-    id: newId(),
-    itemId,
-    timestamp: at,
-    kind: 'categoryChanged',
-    fromName: from?.name ?? null,
-    toName: to?.name ?? null,
-  })
-
-  await tx.done
+  await Promise.all([
+    tx.objectStore('items').put(updated),
+    tx.objectStore('events').add({
+      id: newId(),
+      itemId,
+      timestamp: at,
+      kind: 'categoryChanged',
+      fromName: from?.name ?? null,
+      toName: to?.name ?? null,
+    }),
+    tx.done,
+  ])
 
   return updated
 }
@@ -246,11 +288,12 @@ export async function deleteItem(db: DB, itemId: Id): Promise<void> {
 
   const tx = db.transaction(['items', 'images', 'events'], 'readwrite')
 
-  await tx.objectStore('items').delete(itemId)
-  await tx.objectStore('images').delete(itemId)
-  await Promise.all(eventIds.map((id) => tx.objectStore('events').delete(id)))
-
-  await tx.done
+  await Promise.all([
+    tx.objectStore('items').delete(itemId),
+    tx.objectStore('images').delete(itemId),
+    ...eventIds.map((id) => tx.objectStore('events').delete(id)),
+    tx.done,
+  ])
 }
 
 // ---------------------------------------------------------------- Kategorien
@@ -309,14 +352,13 @@ export async function deleteCategory(db: DB, id: Id, at = Date.now()): Promise<n
 
   const tx = db.transaction(['categories', 'items'], 'readwrite')
 
-  await tx.objectStore('categories').delete(id)
-  await Promise.all(
-    affected.map((item) =>
+  await Promise.all([
+    tx.objectStore('categories').delete(id),
+    ...affected.map((item) =>
       tx.objectStore('items').put({ ...item, categoryId: null, updatedAt: at }),
     ),
-  )
-
-  await tx.done
+    tx.done,
+  ])
 
   return affected.length
 }

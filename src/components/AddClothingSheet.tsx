@@ -45,7 +45,10 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
 
     try {
       setImage(await processImageFile(file))
-    } catch {
+    } catch (cause) {
+      // Ursache protokollieren: ein verschluckter Fehler kostete zuvor eine
+      // halbe Stunde Suche in einem Browser, der sich anders verhaelt.
+      console.error('[Import] Bildverarbeitung fehlgeschlagen', cause)
       setError('Das Bild konnte nicht verarbeitet werden. Bitte noch einmal versuchen.')
     } finally {
       setBusy(false)
@@ -76,7 +79,8 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
         thumb: image.thumb,
       })
       onClose()
-    } catch {
+    } catch (cause) {
+      console.error('[Import] Speichern fehlgeschlagen', cause)
       setError('Speichern fehlgeschlagen.')
       setBusy(false)
     }
@@ -94,19 +98,23 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-label="Kleidungsstück hinzufügen"
         onClick={(e) => e.stopPropagation()}
+        data-testid="add-sheet"
       >
         <span className={styles.grabber} />
         <h2 className={styles.title}>Neues Kleidungsstück</h2>
 
         {!image ? (
           <>
-            <p className={styles.step}>Schritt 1 — Foto</p>
+            <p className={styles.step} data-testid="schritt-foto">
+              Schritt 1 — Foto
+            </p>
 
             <div className={styles.sourceButtons}>
               <button
                 type="button"
                 className={styles.sourceButton}
                 onClick={() => cameraRef.current?.click()}
+                data-testid="foto-aufnehmen"
               >
                 <span className={styles.sourceIcon} aria-hidden="true">
                   📷
@@ -118,6 +126,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                 type="button"
                 className={styles.sourceButton}
                 onClick={() => galleryRef.current?.click()}
+                data-testid="aus-galerie"
               >
                 <span className={styles.sourceIcon} aria-hidden="true">
                   🖼️
@@ -126,7 +135,11 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
-            {busy && <p className={styles.busy}>Bild wird verarbeitet…</p>}
+            {busy && (
+              <p className={styles.busy} data-testid="verarbeitet">
+                Bild wird verarbeitet…
+              </p>
+            )}
           </>
         ) : (
           <>
@@ -137,6 +150,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                   src={previewUrl}
                   alt="Vorschau des aufgenommenen Kleidungsstücks"
                   draggable={false}
+                  data-testid="vorschau"
                 />
               )}
             </div>
@@ -145,6 +159,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
               type="button"
               className={styles.secondary}
               onClick={() => setImage(null)}
+              data-testid="anderes-foto"
             >
               Anderes Foto
             </button>
@@ -159,6 +174,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="z. B. Lieblingshose"
+                data-testid="titel-eingabe"
               />
             </div>
 
@@ -178,6 +194,8 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                         current === category.id ? null : category.id,
                       )
                     }
+                    data-testid="kategorie-chip"
+                    data-category={category.name}
                   >
                     <span aria-hidden="true">{category.emoji}</span>
                     {category.name}
@@ -192,12 +210,14 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Neue Kategorie…"
                   aria-label="Neue Kategorie"
+                  data-testid="neue-kategorie-eingabe"
                 />
                 <button
                   type="button"
                   className={styles.secondary}
                   disabled={newCategoryName.trim() === ''}
                   onClick={() => void handleNewCategory()}
+                  data-testid="kategorie-anlegen"
                 >
                   Anlegen
                 </button>
@@ -212,6 +232,8 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                   aria-pressed={target === null}
                   className={`${styles.chip} ${target === null ? styles.chipActive : ''}`}
                   onClick={() => setTarget(null)}
+                  data-testid="ziel-chip"
+                  data-target="inbox"
                 >
                   Noch offen
                 </button>
@@ -225,6 +247,8 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                       target === household.id ? styles.chipActive : ''
                     }`}
                     onClick={() => setTarget(household.id)}
+                    data-testid="ziel-chip"
+                    data-target={household.name}
                   >
                     {household.name}
                   </button>
@@ -233,7 +257,12 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className={styles.actions}>
-              <button type="button" className={styles.secondary} onClick={onClose}>
+              <button
+                type="button"
+                className={styles.secondary}
+                onClick={onClose}
+                data-testid="abbrechen"
+              >
                 Abbrechen
               </button>
               <button
@@ -241,6 +270,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
                 className={styles.primary}
                 disabled={busy}
                 onClick={() => void handleSave()}
+                data-testid="speichern"
               >
                 {busy ? 'Speichert…' : 'Speichern'}
               </button>
@@ -248,7 +278,11 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
           </>
         )}
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p className={styles.error} data-testid="fehler">
+            {error}
+          </p>
+        )}
 
         <input
           ref={cameraRef}
