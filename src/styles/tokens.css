@@ -1,0 +1,83 @@
+/*
+ * Design-Tokens.
+ *
+ * Der Hintergrund ist bewusst farbig und weich: Glas wirkt nur, wenn hinter ihm
+ * etwas Interessantes liegt. Auf einer grauen Flaeche sieht jeder Blur gleich aus.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Flaechen */
+  --bg-base: #efe9fb;
+  --bg-blob-a: #b9a6ff;
+  --bg-blob-b: #ffb3d9;
+  --bg-blob-c: #9fe0ff;
+
+  /* Text */
+  --text-primary: #1d1631;
+  --text-secondary: rgba(29, 22, 49, 0.62);
+  --text-tertiary: rgba(29, 22, 49, 0.4);
+  --text-on-accent: #ffffff;
+
+  /* Akzent */
+  --accent: #6c3cf4;
+  --accent-soft: rgba(108, 60, 244, 0.16);
+  --danger: #d92b4b;
+
+  /* Glas: Fuellung, Rand, Glanzkante, Schatten */
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+  --glass-fill: rgba(255, 255, 255, 0.42);
+  --glass-fill-strong: rgba(255, 255, 255, 0.66);
+  --glass-stroke: rgba(255, 255, 255, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 8px 32px rgba(37, 20, 78, 0.16);
+  --glass-sheen: rgba(255, 255, 255, 0.4);
+
+  /* Radien */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-pill: 999px;
+
+  /* Abstaende */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* Safe-Area, damit nichts unter Notch oder Home-Indicator rutscht */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-base: #140f22;
+    --bg-blob-a: #4b2fa8;
+    --bg-blob-b: #8f2f6d;
+    --bg-blob-c: #14526e;
+
+    --text-primary: #f4f0ff;
+    --text-secondary: rgba(244, 240, 255, 0.66);
+    --text-tertiary: rgba(244, 240, 255, 0.42);
+
+    --accent: #9b7bff;
+    --accent-soft: rgba(155, 123, 255, 0.22);
+    --danger: #ff6b86;
+
+    --glass-fill: rgba(255, 255, 255, 0.1);
+    --glass-fill-strong: rgba(255, 255, 255, 0.16);
+    --glass-stroke: rgba(255, 255, 255, 0.18);
+    --glass-highlight: rgba(255, 255, 255, 0.34);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.42);
+    --glass-sheen: rgba(255, 255, 255, 0.16);
+  }
+}
