@@ -147,7 +147,10 @@ export function DndSpike() {
   const [touchAction, setTouchAction] = useState<TouchActionOption>('manipulation')
 
   const [draft, setDraft] = useState('')
-  const [cameraVerdict, setCameraVerdict] = useState<CameraVerdict>('unbekannt')
+  // Lesen ist rein und darf beim Render passieren; verbraucht wird der Merker im Effekt.
+  const [cameraVerdict, setCameraVerdict] = useState<CameraVerdict>(() =>
+    sessionStorage.getItem(CAMERA_PROBE_KEY) ? 'neu-geladen' : 'unbekannt',
+  )
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
   /*
@@ -162,12 +165,9 @@ export function DndSpike() {
     }),
   )
 
-  // Lag beim Start ein Kamera-Merker vor, hat die Seite waehrend des Pickers neu geladen.
+  // Der Merker darf nur einmal wirken, sonst meldet jeder weitere Start dasselbe.
   useEffect(() => {
-    if (sessionStorage.getItem(CAMERA_PROBE_KEY)) {
-      sessionStorage.removeItem(CAMERA_PROBE_KEY)
-      setCameraVerdict('neu-geladen')
-    }
+    sessionStorage.removeItem(CAMERA_PROBE_KEY)
   }, [])
 
   function handleDragStart(event: DragStartEvent) {

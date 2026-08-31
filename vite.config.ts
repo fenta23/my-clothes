@@ -3,7 +3,16 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
+/*
+ * GitHub Pages liefert das Projekt unter einem Unterpfad aus. Basis, Manifest-Scope
+ * und Service-Worker-Fallback muessen alle darauf zeigen - sonst laedt die
+ * installierte App eine weisse Seite.
+ */
+const BASE = '/my-clothes/'
+
 export default defineConfig({
+  base: BASE,
+
   plugins: [
     react(),
 
@@ -24,17 +33,17 @@ export default defineConfig({
           'Kleidung fotografieren, kategorisieren und zwischen zwei Haushalten hin- und herschieben.',
         lang: 'de',
         dir: 'ltr',
-        start_url: '/',
-        scope: '/',
+        start_url: BASE,
+        scope: BASE,
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#efe9fb',
         theme_color: '#efe9fb',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: `${BASE}icon-192.png`, sizes: '192x192', type: 'image/png' },
+          { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png' },
           {
-            src: '/icon-maskable-512.png',
+            src: `${BASE}icon-maskable-512.png`,
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -44,7 +53,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         cleanupOutdatedCaches: true,
-        navigateFallback: '/index.html',
+        navigateFallback: `${BASE}index.html`,
       },
       // Service Worker auch im Dev-Server, damit das Offline-Verhalten frueh testbar ist.
       devOptions: { enabled: true, type: 'module', navigateFallback: 'index.html' },

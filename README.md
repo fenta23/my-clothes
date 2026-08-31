@@ -1,5 +1,7 @@
 # Kleiderschrank
 
+**Live:** https://fenta23.github.io/my-clothes/
+
 Installierbare Web-App (PWA), mit der Kleidungsstücke per Foto erfasst,
 kategorisiert und zwischen zwei Haushalten hin- und hergeschoben werden.
 Jeder Wechsel wird mit Zeitstempel protokolliert.
@@ -31,12 +33,28 @@ Deshalb läuft der Dev-Server über `@vitejs/plugin-basic-ssl`. Das Zertifikat i
 selbstsigniert; auf dem iPhone muss die Warnung einmalig bestätigt werden.
 Alternative ohne Warnung: ein Tunnel via `cloudflared tunnel --url https://localhost:5173`.
 
+### Deployment
+
+Jeder Push auf `main` laeuft durch GitHub Actions: Typecheck, Lint, Unit-Tests, Build —
+und veroeffentlicht erst danach auf GitHub Pages. Pull Requests werden geprueft, aber
+nicht veroeffentlicht.
+
+Weil die App unter dem Unterpfad `/my-clothes/` liegt, ist `base` in `vite.config.ts`
+gesetzt und Manifest-Scope sowie Service-Worker-Fallback zeigen darauf. Aendert sich der
+Pfad, muss das an genau dieser einen Stelle nachgezogen werden.
+
 ### Test auf dem iPhone
 
-1. `npm run dev` — Vite zeigt die Netzwerk-Adresse an
+Am einfachsten über die Live-URL — gültiges Zertifikat, damit funktioniert auch der
+Service Worker. Lokal geht es ebenfalls:
+
+1. `npm run dev` — Vite zeigt die Netzwerk-Adresse an, App liegt unter `/my-clothes/`
 2. Am iPhone im selben WLAN öffnen, Zertifikatswarnung bestätigen
 3. Teilen → **Zum Home-Bildschirm**
 4. Ab jetzt die App **vom Home-Bildschirm** starten — nur dort gilt Standalone-Verhalten
+
+Ein selbstsigniertes Zertifikat reicht **nicht** für den Service Worker: Safari lehnt die
+Registrierung trotz bestätigter Warnung ab. Offline-Tests deshalb über die Live-URL.
 
 ## Wichtig: Datenhaltbarkeit
 
