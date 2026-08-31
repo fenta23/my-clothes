@@ -1,6 +1,12 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 
-import type { Category, ClothingItem, Household, ItemEvent, ItemImages } from './types.ts'
+import type {
+  Category,
+  ClothingItem,
+  Household,
+  ItemEvent,
+  StoredImages,
+} from './types.ts'
 
 /**
  * IndexedDB-Schema.
@@ -31,12 +37,12 @@ export interface ClothesDB extends DBSchema {
   }
   images: {
     key: string
-    value: ItemImages
+    value: StoredImages
   }
 }
 
 export const DB_NAME = 'kleiderschrank'
-export const DB_VERSION = 1
+export const DB_VERSION = 2
 
 /**
  * Oeffnet die Datenbank und legt beim ersten Mal alle Stores an.
@@ -47,7 +53,16 @@ export const DB_VERSION = 1
  */
 export function openClothesDB(name = DB_NAME): Promise<IDBPDatabase<ClothesDB>> {
   return openDB<ClothesDB>(name, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
+      if (oldVersion >= 1) {
+        // Version 2 legt Bilder als ArrayBuffer statt als Blob ab. Alte Eintraege
+        // liessen sich nicht mehr anzeigen, also werden sie verworfen statt eine
+        // halb kaputte Anzeige zu erzeugen. Betrifft nur Teststaende.
+        db.deleteObjectStore('images')
+        db.createObjectStore('images', { keyPath: 'id' })
+        return
+      }
+
       const households = db.createObjectStore('households', { keyPath: 'id' })
       households.createIndex('by-position', 'position')
 

@@ -1,0 +1,73 @@
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 108px;
+
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--glass-fill);
+  box-shadow: 0 2px 12px rgba(37, 20, 78, 0.18);
+
+  /*
+   * Der Kern der Bedienung: waagerecht wischen ueberlaesst der Browser dem
+   * Scrollen der Bahn, senkrecht wischen bleibt fuer das Verschieben uebrig.
+   */
+  touch-action: pan-x;
+
+  transition: opacity 140ms linear, filter 140ms linear, transform 140ms var(--ease-out);
+}
+
+.photo {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--accent-soft);
+}
+
+.placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  font-size: 1.5rem;
+}
+
+.caption {
+  padding: var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 34px;
+}
+
+.badge {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  flex: 0 0 auto;
+}
+
+.name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dragging {
+  opacity: 0.3;
+}
+
+/* Vom Filter ausgeblendet: sichtbar, aber deutlich zurueckgenommen und passiv. */
+.dimmed {
+  opacity: 0.28;
+  filter: grayscale(0.9);
+  pointer-events: none;
+}
+
+.overlay {
+  transform: scale(1.06) rotate(-2deg);
+  box-shadow: 0 18px 44px rgba(37, 20, 78, 0.42);
+}

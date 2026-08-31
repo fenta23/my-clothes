@@ -10,6 +10,7 @@ import type { IDBPDatabase } from 'idb'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { openClothesDB, type ClothesDB } from './db.ts'
+import { DEFAULT_CATEGORIES } from './defaults.ts'
 import {
   createCategory,
   createItem,
@@ -74,6 +75,15 @@ describe('seedIfEmpty', () => {
     expect(categories.length).toBeGreaterThan(0)
     expect(categories.map((c) => c.sortOrder)).toEqual(categories.map((_, i) => i))
     expect(categories.map((c) => c.name)).toContain('Hose')
+  })
+
+  it('verdoppelt nichts bei zwei GLEICHZEITIGEN Aufrufen', async () => {
+    // Genau dieser Fall trat auf: React fuehrt Effekte im StrictMode ueberlappend
+    // doppelt aus, beide Laeufe sahen eine leere Datenbank und legten an.
+    await Promise.all([seedIfEmpty(db, 1000), seedIfEmpty(db, 1000)])
+
+    expect(await listHouseholds(db)).toHaveLength(2)
+    expect(await listCategories(db)).toHaveLength(DEFAULT_CATEGORIES.length)
   })
 
   it('verdoppelt nichts beim zweiten Aufruf', async () => {

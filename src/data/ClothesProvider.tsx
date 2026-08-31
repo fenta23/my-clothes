@@ -110,6 +110,22 @@ export function ClothesProvider({
     setItems(await repo.listItems(handle))
   }, [])
 
+  /*
+   * Lesezugriffe haengen nur an der Datenbank, nicht am geladenen Bestand.
+   * Wuerden sie im grossen useMemo unten liegen, bekaemen sie bei jeder
+   * Bestandsaenderung eine neue Identitaet - und jede Karte wuerde ihr Foto
+   * erneut laden.
+   */
+  const loadImages = useCallback(
+    async (itemId: Id) => (db ? repo.getImages(db, itemId) : undefined),
+    [db],
+  )
+
+  const listEvents = useCallback(
+    async (itemId: Id) => (db ? repo.listEvents(db, itemId) : []),
+    [db],
+  )
+
   const value = useMemo<ClothesContextValue>(() => {
     /** Schreibzugriffe brauchen eine offene Datenbank - vorher gibt es keine UI. */
     const need = () => {
@@ -185,10 +201,10 @@ export function ClothesProvider({
         setHouseholds(await repo.listHouseholds(handle))
       },
 
-      loadImages: (itemId) => repo.getImages(need(), itemId),
-      listEvents: (itemId) => repo.listEvents(need(), itemId),
+      loadImages,
+      listEvents,
     }
-  }, [db, error, households, categories, items, refreshItems])
+  }, [db, error, households, categories, items, refreshItems, loadImages, listEvents])
 
   return <ClothesContext.Provider value={value}>{children}</ClothesContext.Provider>
 }
