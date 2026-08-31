@@ -63,6 +63,13 @@ export default defineConfig({
   server: { host: true },
 
   test: {
+    /*
+     * Ohne diese Einschraenkung sammelt Vitest auch e2e/*.spec.ts ein und
+     * scheitert an Playwrights test.beforeEach - die beiden Laeufe muessen
+     * sich sauber trennen.
+     */
+    include: ['src/**/*.test.{ts,tsx}'],
+
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./test/setup.ts'],
