@@ -46,7 +46,21 @@ const LANE_COLORS: Record<LaneId, string> = {
 const CAMERA_PROBE_KEY = 'spike:kameraProbe'
 
 const DELAY_OPTIONS = [0, 150, 250, 400] as const
-const TOUCH_ACTION_OPTIONS = ['manipulation', 'none'] as const
+
+/*
+ * `pan-x` ist der Kern der Loesung.
+ *
+ * Die Geometrie der App loest den Konflikt selbst: Bahnen laufen waagerecht,
+ * Verschieben laeuft senkrecht. Mit `touch-action: pan-x` auf der Karte
+ * entscheidet der Browser anhand der Richtung:
+ *   - waagerecht wischen -> der Browser scrollt die Bahn und schickt
+ *     `pointercancel`, dnd-kit bricht ab
+ *   - senkrecht wischen  -> der Browser scrollt nicht, die Zeigerereignisse
+ *     laufen weiter, dnd-kit startet den Drag
+ * Kein Stillhalten noetig, kein Ratespiel - und mit der Maus greift touch-action
+ * ohnehin nicht, dort zieht man einfach sofort.
+ */
+const TOUCH_ACTION_OPTIONS = ['pan-x', 'manipulation', 'none'] as const
 
 type TouchActionOption = (typeof TOUCH_ACTION_OPTIONS)[number]
 
@@ -55,17 +69,28 @@ type CameraVerdict = 'unbekannt' | 'zustand-erhalten' | 'neu-geladen'
 function Card({
   card,
   touchAction,
+  selected,
+  onSelect,
 }: {
   card: SpikeCard
   touchAction: TouchActionOption
+  selected: boolean
+  onSelect: (id: string) => void
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id })
 
   return (
     <div
       ref={setNodeRef}
-      className={`${styles.card} ${isDragging ? styles.cardDragging : ''}`}
+      className={[
+        styles.card,
+        isDragging ? styles.cardDragging : '',
+        selected ? styles.cardSelected : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={{ background: LANE_COLORS[card.lane], touchAction }}
+      onClick={() => onSelect(card.id)}
       {...listeners}
       {...attributes}
     >
@@ -78,21 +103,48 @@ function Lane({
   lane,
   cards,
   touchAction,
+  selectedId,
+  onSelect,
+  onDropHere,
 }: {
   lane: LaneId
   cards: SpikeCard[]
   touchAction: TouchActionOption
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onDropHere: (lane: LaneId) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: lane })
+
+  // Ist etwas ausgewaehlt, wird der Bahnkopf zur Ablageflaeche zum Antippen.
+  const armed = selectedId !== null && !cards.some((c) => c.id === selectedId)
 
   return (
     <section
       ref={setNodeRef}
-      className={`glass glass--lg ${styles.lane} ${isOver ? styles.laneOver : ''}`}
+      className={[
+        'glass',
+        'glass--lg',
+        styles.lane,
+        isOver ? styles.laneOver : '',
+        armed ? styles.laneArmed : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <header className={styles.laneHeader}>
         <span>{LANE_TITLES[lane]}</span>
-        <span>{cards.length}</span>
+        {armed ? (
+          <button
+            type="button"
+            className={styles.laneDropButton}
+            onClick={() => onDropHere(lane)}
+          >
+            hierhin
+          </button>
+        ) : (
+          <span>{cards.length}</span>
+        )}
       </header>
 
       {cards.length === 0 ? (
@@ -101,7 +153,13 @@ function Lane({
         /* pan-x erlaubt der Bahn weiterhin horizontales Scrollen. */
         <div className={styles.scroller} style={{ touchAction: 'pan-x' }}>
           {cards.map((card) => (
-            <Card key={card.id} card={card} touchAction={touchAction} />
+            <Card
+              key={card.id}
+              card={card}
+              touchAction={touchAction}
+              selected={card.id === selectedId}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       )}
@@ -143,8 +201,11 @@ export function DndSpike() {
   const [state, setState] = useState<SpikeState>(() => createInitialState())
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  const [delay, setDelay] = useState<number>(250)
-  const [touchAction, setTouchAction] = useState<TouchActionOption>('manipulation')
+  const [delay, setDelay] = useState<number>(0)
+  const [touchAction, setTouchAction] = useState<TouchActionOption>('pan-x')
+
+  /** Zweiter Weg ohne Geste: Karte antippen, dann Zielbahn antippen. */
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const [draft, setDraft] = useState('')
   // Lesen ist rein und darf beim Render passieren; verbraucht wird der Merker im Effekt.
@@ -203,8 +264,9 @@ export function DndSpike() {
       <header>
         <h1 className={styles.heading}>DnD-Spike</h1>
         <p className={styles.sub}>
-          Karte ziehen und in einer anderen Bahn ablegen. Danach pruefen, ob sich die
-          Bahn weiterhin horizontal scrollen laesst.
+          <strong>Senkrecht</strong> wischen verschiebt die Karte, <strong>waagerecht</strong>{' '}
+          wischen scrollt die Bahn. Beides ohne Stillhalten. Alternativ: Karte antippen,
+          dann bei einer anderen Bahn auf „hierhin“ tippen.
         </p>
       </header>
 
@@ -236,6 +298,13 @@ export function DndSpike() {
             lane={lane}
             cards={cardsInLane(state, lane)}
             touchAction={touchAction}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedId((current) => (current === id ? null : id))}
+            onDropHere={(target) => {
+              if (!selectedId) return
+              setState((current) => moveCard(current, selectedId, target, Date.now()))
+              setSelectedId(null)
+            }}
           />
         ))}
 

@@ -42,6 +42,12 @@ jobs:
       - name: Unit-Tests
         run: npm test
 
+      - name: Browser fuer E2E installieren
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: E2E-Tests (Drag & Drop)
+        run: npm run e2e
+
       - name: Bauen
         run: npm run build
 
