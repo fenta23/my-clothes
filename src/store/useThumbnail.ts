@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import { useWardrobeStore } from '../../store/StoreProvider.tsx'
-import type { Id } from '../../shared/db/ids.ts'
-import { useObjectUrl } from '../../shared/lib/useObjectUrl.ts'
+import { useWardrobeStore } from './StoreProvider.tsx'
+import type { Id } from '../shared/db/ids.ts'
+import { useObjectUrl } from '../shared/lib/useObjectUrl.ts'
 
 /**
  * Laedt das Vorschaubild eines Kleidungsstuecks und gibt es als URL zurueck.
@@ -13,6 +13,10 @@ import { useObjectUrl } from '../../shared/lib/useObjectUrl.ts'
  *
  * Greift nur auf die Store-Referenz zu, nicht auf seinen Zustand - eine Karte soll
  * nicht neu rendern, nur weil anderswo ein Foto hinzugekommen ist.
+ *
+ * Liegt in `store` und nicht in einem Feature, weil sowohl die Bahnen als auch die
+ * Outfit-Figur dieselben Vorschaubilder brauchen - und ein Feature darf kein anderes
+ * kennen. Nach `shared` kann der Haken nicht, denn er kennt den Store.
  */
 export function useThumbnail(itemId: Id): string | null {
   const store = useWardrobeStore()

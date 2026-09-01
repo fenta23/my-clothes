@@ -4,7 +4,7 @@ import type { Category } from '../../entities/category/types.ts'
 import type { ClothingItem } from '../../entities/clothing/types.ts'
 import { IconClothing } from '../../shared/ui/icons.ts'
 import styles from './ClothingCard.module.css'
-import { useThumbnail } from './useThumbnail.ts'
+import { useThumbnail } from '../../store/useThumbnail.ts'
 
 /**
  * Anzeigegroesse der Vorschau in CSS-Pixeln.
