@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { useWardrobe, useWardrobeStore } from '../../store/StoreProvider.tsx'
 import { selectItems } from '../../store/selectors.ts'
 import { downloadBlob } from '../../shared/lib/download.ts'
+import { IconExport, IconImport } from '../../shared/ui/icons.ts'
 import controls from '../../shared/ui/controls.module.css'
 import { BackupError, backupFileName, exportBackup, importBackup } from './backup.ts'
 import styles from './BackupSection.module.css'
@@ -88,6 +89,7 @@ export function BackupSection() {
           data-testid="sicherung-export"
           onClick={() => void handleExport()}
         >
+          <IconExport className="icon icon--sm" aria-hidden="true" />
           {items.length === 0 ? 'Exportieren' : `Exportieren (${items.length})`}
         </button>
 
@@ -98,6 +100,7 @@ export function BackupSection() {
           data-testid="sicherung-import"
           onClick={() => setConfirming(true)}
         >
+          <IconImport className="icon icon--sm" aria-hidden="true" />
           Wiederherstellen
         </button>
       </div>

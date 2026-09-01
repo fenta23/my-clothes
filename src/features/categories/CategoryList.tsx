@@ -6,6 +6,7 @@ import type { Category } from '../../entities/category/types.ts'
 import type { Id } from '../../shared/db/ids.ts'
 import { formatTimestamp } from '../../shared/lib/datetime.ts'
 import controls from '../../shared/ui/controls.module.css'
+import { IconDelete, IconMoveDown, IconMoveUp } from '../../shared/ui/icons.ts'
 import styles from './CategoryList.module.css'
 
 /** Auswahl an Farben - freie Farbwahl waere fuer ein Kind mehr Last als Nutzen. */
@@ -89,7 +90,7 @@ function CategoryRow({
           data-testid="kategorie-hoch"
           onClick={() => void store.moveCategory(category.id, 'up')}
         >
-          ↑
+          <IconMoveUp className="icon icon--sm" aria-hidden="true" />
         </button>
 
         <button
@@ -100,7 +101,7 @@ function CategoryRow({
           data-testid="kategorie-runter"
           onClick={() => void store.moveCategory(category.id, 'down')}
         >
-          ↓
+          <IconMoveDown className="icon icon--sm" aria-hidden="true" />
         </button>
 
         <button
@@ -110,7 +111,7 @@ function CategoryRow({
           data-testid="kategorie-loeschen"
           onClick={() => setConfirming(true)}
         >
-          ✕
+          <IconDelete className="icon icon--sm" aria-hidden="true" />
         </button>
       </div>
 

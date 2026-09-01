@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import '../shared/styles/reset.css'
 import '../shared/styles/tokens.css'
 import '../shared/styles/glass.css'
+import '../shared/styles/icons.css'
 
 import { App } from './App.tsx'
 

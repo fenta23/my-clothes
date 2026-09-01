@@ -1,6 +1,7 @@
 import type { ItemEvent } from '../../entities/event/types.ts'
 import { formatTimestamp } from '../../shared/lib/datetime.ts'
 import { describeEvent } from './eventText.ts'
+import { IconForward } from '../../shared/ui/icons.ts'
 import styles from './ItemTimeline.module.css'
 
 /**
@@ -18,9 +19,7 @@ export function ItemTimeline({ events }: { events: readonly ItemEvent[] }) {
   return (
     <details className={styles.details} data-testid="verlauf-details">
       <summary className={styles.summary} data-testid="verlauf-aufklappen">
-        <span className={styles.chevron} aria-hidden="true">
-          ›
-        </span>
+        <IconForward className={`icon icon--sm ${styles.chevron}`} aria-hidden="true" />
         Verlauf
         <span className={styles.count}>
           {events.length === 1 ? '1 Eintrag' : `${events.length} Einträge`}

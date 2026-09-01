@@ -6,6 +6,12 @@ import { HouseholdSettings } from '../features/households/HouseholdSettings.tsx'
 import { ImprintPanel } from '../features/legal/ImprintPanel.tsx'
 import { PrivacyPanel } from '../features/legal/PrivacyPanel.tsx'
 import { Drawer } from '../shared/ui/Drawer.tsx'
+import {
+  IconForward,
+  IconImprint,
+  IconPrivacy,
+  IconSettings,
+} from '../shared/ui/icons.ts'
 import styles from './MainMenu.module.css'
 
 /**
@@ -27,22 +33,29 @@ const TITLES: Record<View, string> = {
   impressum: 'Impressum',
 }
 
-const ENTRIES: { view: Exclude<View, 'liste'>; icon: string; title: string; hint: string }[] = [
+interface MenuEntry {
+  view: Exclude<View, 'liste'>
+  Icon: typeof IconSettings
+  title: string
+  hint: string
+}
+
+const ENTRIES: MenuEntry[] = [
   {
     view: 'einstellungen',
-    icon: '⚙︎',
+    Icon: IconSettings,
     title: 'Einstellungen',
     hint: 'Haushalte, Kategorien und Sicherung',
   },
   {
     view: 'datenschutz',
-    icon: '🔒',
+    Icon: IconPrivacy,
     title: 'Datenschutz',
     hint: 'Was mit deinen Fotos passiert',
   },
   {
     view: 'impressum',
-    icon: 'ℹ︎',
+    Icon: IconImprint,
     title: 'Impressum',
     hint: 'Wer diese App betreibt',
   },
@@ -70,16 +83,12 @@ export function MainMenu({ onClose }: { onClose: () => void }) {
                 data-view={entry.view}
                 onClick={() => setView(entry.view)}
               >
-                <span className={styles.icon} aria-hidden="true">
-                  {entry.icon}
-                </span>
+                <entry.Icon className={`icon icon--lg ${styles.icon}`} aria-hidden="true" />
                 <span className={styles.entryText}>
                   <span className={styles.entryTitle}>{entry.title}</span>
                   <span className={styles.entryHint}>{entry.hint}</span>
                 </span>
-                <span className={styles.chevron} aria-hidden="true">
-                  ›
-                </span>
+                <IconForward className={`icon ${styles.chevron}`} aria-hidden="true" />
               </button>
             ))}
           </div>

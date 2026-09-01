@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 
 import type { Category } from '../../entities/category/types.ts'
 import type { ClothingItem } from '../../entities/clothing/types.ts'
+import { IconClothing } from '../../shared/ui/icons.ts'
 import styles from './ClothingCard.module.css'
 import { useThumbnail } from './useThumbnail.ts'
 
@@ -69,8 +70,13 @@ export function ClothingCard({
           height={THUMB_DISPLAY_PX}
         />
       ) : (
+        /*
+         * Ohne Foto steht das Symbol der Kategorie da - das ist die Angabe des
+         * Nutzers und bleibt ein Emoji. Nur wenn auch die fehlt, kommt ein Icon
+         * der Oberflaeche zum Zug.
+         */
         <span className={styles.placeholder} aria-hidden="true">
-          {category?.emoji ?? '👕'}
+          {category ? category.emoji : <IconClothing className="icon icon--lg" />}
         </span>
       )}
 
@@ -105,7 +111,7 @@ export function ClothingCardOverlay({
         <img className={styles.photo} src={url} alt="" draggable={false} decoding="sync" />
       ) : (
         <span className={styles.placeholder} aria-hidden="true">
-          {category?.emoji ?? '👕'}
+          {category ? category.emoji : <IconClothing className="icon icon--lg" />}
         </span>
       )}
       <span className={styles.caption}>

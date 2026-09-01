@@ -27,6 +27,7 @@ import {
   selectItemsIn,
   selectStatus,
 } from '../store/selectors.ts'
+import { IconAdd, IconMenu } from '../shared/ui/icons.ts'
 import styles from './Wardrobe.module.css'
 
 /**
@@ -117,7 +118,7 @@ export function Wardrobe() {
           data-testid="menue-button"
           onClick={() => setMenuOpen(true)}
         >
-          <span aria-hidden="true">☰</span>
+          <IconMenu className="icon" aria-hidden="true" />
         </button>
       </div>
 
@@ -179,7 +180,7 @@ export function Wardrobe() {
         onClick={() => setAdding(true)}
         data-testid="add-button"
       >
-        <span aria-hidden="true">＋</span> Kleidung
+        <IconAdd className="icon" aria-hidden="true" /> Kleidung
       </button>
 
       {adding && <AddClothingSheet onClose={() => setAdding(false)} />}

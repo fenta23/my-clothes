@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { IconBack, IconClose } from './icons.ts'
 import styles from './Drawer.module.css'
 
 /**
@@ -45,7 +46,7 @@ export function Drawer({
               data-testid="menue-zurueck"
               onClick={onBack}
             >
-              ‹
+              <IconBack className="icon" aria-hidden="true" />
             </button>
           )}
 
@@ -58,7 +59,7 @@ export function Drawer({
             data-testid="menue-schliessen"
             onClick={onClose}
           >
-            ✕
+            <IconClose className="icon" aria-hidden="true" />
           </button>
         </header>
 

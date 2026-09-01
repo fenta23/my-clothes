@@ -134,6 +134,24 @@ gh variable set CONTROLLER_NAME --body "Vorname Nachname"
 Fehlt die Angabe, zeigen beide Panels einen deutlich sichtbaren Warnhinweis — ein
 unvollständiges Impressum soll auffallen, nicht als leere Zeile durchgehen.
 
+## Icons
+
+Die Oberfläche nutzt [Lucide](https://lucide.dev/), gebündelt in
+`src/shared/ui/icons.ts` unter zweckgebundenen Namen: `IconPrivacy` sagt, wofür es
+steht, `ShieldCheck` nur, wie es aussieht. Ein Wechsel des Bildes oder der Bibliothek
+betrifft damit eine Datei statt dreizehn Aufrufstellen. Größe und Strichstärke kommen
+aus einer globalen `.icon`-Klasse (`src/shared/styles/icons.css`) — `stroke-width` per
+CSS, weil das die Präsentationsattribute des SVG überschreibt.
+
+Gemessen: 17 Icons kosten **+1,9 kB gzip** (95,3 → 97,2 kB). Tree-Shaking greift, im
+Bundle liegt kein ungenutztes Icon.
+
+**Die Kategorie-Symbole bleiben bewusst Emoji.** Sie sind Daten, nicht Oberfläche:
+frei wählbar, auch für selbst erfundene Kategorien. Lucide deckt von den neun
+Startkategorien nur T-Shirt und Schuhe ab — für Hose, Kleid, Rock, Pullover, Jacke,
+Unterwäsche und Socken gibt es dort nichts. Nebeneffekt: die Farbigkeit der Emoji hilft
+beim Wiedererkennen und setzt sich klar von der einfarbigen Bedienung ab.
+
 ## Bilder und Geschwindigkeit
 
 Beim Import entstehen zwei Fassungen (`src/features/clothing-import/images.ts`):
