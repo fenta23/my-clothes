@@ -105,6 +105,33 @@ gerade mitten in der Aufnahme eines Fotos sein.
 einen eigenen Server aus, täuscht durch eine veränderte `sw.js` eine
 Neuveröffentlichung vor und erwartet Banner, Neuladen und den Erhalt der Daten.
 
+## Bilder und Geschwindigkeit
+
+Beim Import entstehen zwei Fassungen (`src/features/clothing-import/images.ts`):
+Original auf **1600 px** lange Kante, Vorschau auf **400 px**, beide JPEG bei
+Qualität 0.8. Die Bahnen laden ausschließlich die Vorschau; das Original wird nur
+in der Detailansicht geholt.
+
+Gemessen mit `e2e/performance.spec.ts` (WebKit auf einem Mac — ein iPhone 12 braucht
+länger):
+
+| | 200 Stücke | 500 Stücke |
+| --- | --- | --- |
+| Belegter Speicher | 28 MB | 70 MB |
+| Laden bis alle Karten da | ~450 ms | ~520 ms |
+| Reaktion auf Antippen | ~110 ms | ~150 ms |
+| Geladene Bilder | 21 | 21 |
+
+Die Zahlen stammen von synthetischen Bildern, die sich besser komprimieren als echte
+Fotos — bei echten iPhone-Aufnahmen ist eher mit 250–400 KB je Original zu rechnen,
+also rund 70 MB für 200 Stücke.
+
+**Der entscheidende Punkt ist die letzte Zeile.** Ohne `loading="lazy"` an der Karte
+lud und dekodierte der Browser *alle* Bilder, auch die weit außerhalb der Bahn — bei
+jedem 400er-JPEG rund 640 KB dekodiert, also über 100 MB für Unsichtbares. Die
+Ladezeit war dabei identisch: das Aufschieben kostet nichts und spart alles. Ein Test
+sichert das ab, damit es nicht unbemerkt zurückfällt.
+
 ## Wichtig: Datenhaltbarkeit
 
 Die Daten hängen am **Origin** (der URL). Ändert sich die Domain, sind die Fotos weg.
