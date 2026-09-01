@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 
+import * as backup from './backup.ts'
 import { openClothesDB, type ClothesDB } from './db.ts'
 import * as repo from './repository.ts'
 import type {
@@ -55,6 +56,11 @@ export interface ClothesContextValue {
   itemsPerCategory: Map<Id, number>
 
   renameHousehold: (id: Id, name: string) => Promise<void>
+
+  /** Packt den gesamten Bestand in ein ZIP. */
+  exportBackup: () => Promise<Blob>
+  /** Ersetzt den Bestand durch den Inhalt einer Sicherung. */
+  importBackup: (archive: Uint8Array) => Promise<{ items: number; images: number }>
 
   loadImages: (itemId: Id) => Promise<ItemImages | undefined>
   listEvents: (itemId: Id) => Promise<ItemEvent[]>
@@ -225,6 +231,26 @@ export function ClothesProvider({
         const handle = need()
         await repo.renameHousehold(handle, id, name)
         setHouseholds(await repo.listHouseholds(handle))
+      },
+
+      exportBackup: () => backup.exportBackup(need()),
+
+      importBackup: async (archive) => {
+        const handle = need()
+        const result = await backup.importBackup(handle, archive)
+
+        // Alles neu einlesen - die Sicherung hat den kompletten Bestand ersetzt.
+        const [h, c, i] = await Promise.all([
+          repo.listHouseholds(handle),
+          repo.listCategories(handle),
+          repo.listItems(handle),
+        ])
+
+        setHouseholds(h)
+        setCategories(c)
+        setItems(i)
+
+        return result
       },
 
       loadImages,

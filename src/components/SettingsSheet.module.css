@@ -170,3 +170,44 @@
   color: var(--text-on-accent);
   font-weight: 700;
 }
+
+/* --- Sicherung --- */
+
+.hint {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.backupActions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.backupButton {
+  flex: 1;
+  padding: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.status {
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.statusError {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+}
+
+.hiddenInput {
+  display: none;
+}
