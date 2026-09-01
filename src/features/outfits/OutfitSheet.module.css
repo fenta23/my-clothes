@@ -1,0 +1,24 @@
+.status {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Verteilt ueber beide Haushalte: das ist die Auskunft, wegen der es Outfits gibt. */
+.statusVerteilt {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.actions > * {
+  flex: 1;
+}

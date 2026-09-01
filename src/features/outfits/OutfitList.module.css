@@ -1,0 +1,54 @@
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* Der Bildschirm dahinter ist gesperrt - hier soll senkrecht gescrollt werden. */
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-1) var(--sp-1) calc(var(--sp-6) + var(--sp-5));
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.statusVerteilt {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.empty {
+  margin: auto;
+  max-width: 30ch;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

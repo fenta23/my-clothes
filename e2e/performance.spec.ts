@@ -24,7 +24,9 @@ async function seedManyItems(page: Page, count: number): Promise<SeedReport> {
   return page.evaluate(async (count) => {
     const openDb = () =>
       new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open('kleiderschrank', 2)
+        // Ohne Versionsnummer: der Test soll die vorhandene Datenbank oeffnen und
+        // nicht bei jedem Schema-Schritt nachgezogen werden muessen.
+        const request = indexedDB.open('kleiderschrank')
         request.onsuccess = () => resolve(request.result)
         request.onerror = () => reject(request.error)
       })

@@ -46,8 +46,8 @@ test.describe('Die Seite steht still', () => {
 
   test('senkrechtes Ziehen an der Kopfzeile verschiebt nichts', async ({ page }) => {
     // Genau die Geste, die auf dem iPhone 12 die ganze Seite verschoben hat.
-    const titel = page.getByText('Kleiderschrank', { exact: true })
-    await pointerDrag(page, titel, wardrobe.bottom.root, 'touch')
+    const kopfzeile = page.getByTestId('kopfzeile')
+    await pointerDrag(page, kopfzeile, wardrobe.bottom.root, 'touch')
 
     const scrollTop = await page.evaluate(() => document.scrollingElement?.scrollTop ?? -1)
     expect(scrollTop).toBe(0)
