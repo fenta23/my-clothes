@@ -1,0 +1,114 @@
+/*
+ * Wiederkehrende Bedienelemente. Bewusst schlank gehalten: das hier ist kein
+ * Baukasten, sondern nur das, was in mehr als einem Feature gleich aussieht.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sectionTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.input {
+  width: 100%;
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--glass-stroke);
+  background: var(--glass-fill);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chip {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-stroke);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.chipActive {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+
+.primary {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.primary:disabled {
+  opacity: 0.4;
+}
+
+.secondary {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-stroke);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.danger {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* Rueckfrage vor einem nicht umkehrbaren Schritt. */
+.confirm {
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.confirmActions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.hint {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.hiddenInput {
+  display: none;
+}

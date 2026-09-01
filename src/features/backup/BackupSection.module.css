@@ -1,0 +1,32 @@
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.button {
+  flex: 1;
+  padding: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.button:disabled {
+  opacity: 0.5;
+}
+
+.status {
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.statusError {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+}

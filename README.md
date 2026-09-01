@@ -56,6 +56,36 @@ Service Worker. Lokal geht es ebenfalls:
 Ein selbstsigniertes Zertifikat reicht **nicht** für den Service Worker: Safari lehnt die
 Registrierung trotz bestätigter Warnung ab. Offline-Tests deshalb über die Live-URL.
 
+## Aufbau
+
+Der Code ist in Feature-Slices geschnitten. Die Schichten von unten nach oben:
+
+| Schicht | Inhalt | Darf kennen |
+| --- | --- | --- |
+| `shared/` | generische Bausteine: Store-Grundlage, Sheet-Rahmen, Datum, Plattform | nur sich selbst |
+| `entities/` | Fachtypen und ihre Ablage in IndexedDB, je Entität ein Ordner | `shared` |
+| `store/` | der gemeinsame Zustand, verbindet mehrere Entitäten | `entities`, `shared` |
+| `features/` | fachliche Bausteine der Oberfläche | alles darunter |
+| `app/` | setzt die Features zusammen | alles |
+
+Zwei Regeln, die `src/architecture.test.ts` bei jedem Lauf prüft:
+
+1. **Importe zeigen nur nach unten.**
+2. **Ein Feature kennt kein anderes Feature.** Zusammengesetzt wird ausschließlich in
+   `app/` — deshalb liegen `Wardrobe.tsx` und `SettingsSheet.tsx` dort und nicht in
+   einem Feature.
+
+Der Test ersetzt eine Lint-Regel, die oxlint nicht mitbringt. Ohne Zwang verfällt
+jede Struktur wieder — es genügt ein bequemer Import.
+
+### Warum ein eigener Store
+
+Komponenten abonnieren über Selektoren gezielt einen Ausschnitt des Zustands. Vorher
+hing die ganze Oberfläche an einem gemeinsamen Context: ein einziges neues Foto
+rendert damit jede Karte, jedes Sheet und jeden Filter-Chip neu. `src/store/wardrobeStore.test.tsx`
+hält das als Test fest — Kategorien dürfen sich nicht neu rendern, wenn Kleidung
+hinzukommt.
+
 ## Updates
 
 Der Service Worker läuft im Modus `prompt`, nicht `autoUpdate`. Grund: eine
