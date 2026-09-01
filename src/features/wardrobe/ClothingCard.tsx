@@ -5,6 +5,15 @@ import type { ClothingItem } from '../../entities/clothing/types.ts'
 import styles from './ClothingCard.module.css'
 import { useThumbnail } from './useThumbnail.ts'
 
+/**
+ * Anzeigegroesse der Vorschau in CSS-Pixeln.
+ *
+ * Als width/height am Bild gesetzt, damit der Browser den Platz kennt, bevor die
+ * Datei da ist - sonst springt das Layout beim Nachladen, und `loading="lazy"`
+ * koennte gar nicht entscheiden, was ausserhalb des Sichtfelds liegt.
+ */
+const THUMB_DISPLAY_PX = 108
+
 export function ClothingCard({
   item,
   category,
@@ -42,7 +51,23 @@ export function ClothingCard({
       {...attributes}
     >
       {url ? (
-        <img className={styles.photo} src={url} alt="" draggable={false} />
+        <img
+          className={styles.photo}
+          src={url}
+          alt=""
+          draggable={false}
+          /*
+           * Entscheidend bei vollem Schrank: ohne diese beiden Angaben laedt und
+           * dekodiert der Browser auch die Bilder, die weit rechts ausserhalb der
+           * Bahn liegen. Gemessen waren das alle 200 auf einmal - jedes 400er-JPEG
+           * belegt dekodiert rund 640 KB, macht ueber 100 MB fuer Bilder, die
+           * niemand sieht.
+           */
+          loading="lazy"
+          decoding="async"
+          width={THUMB_DISPLAY_PX}
+          height={THUMB_DISPLAY_PX}
+        />
       ) : (
         <span className={styles.placeholder} aria-hidden="true">
           {category?.emoji ?? '👕'}
@@ -76,7 +101,8 @@ export function ClothingCardOverlay({
   return (
     <div className={`${styles.card} ${styles.overlay}`} data-testid="drag-overlay">
       {url ? (
-        <img className={styles.photo} src={url} alt="" draggable={false} />
+        // Haengt am Finger und ist damit immer sichtbar - hier waere Aufschieben falsch.
+        <img className={styles.photo} src={url} alt="" draggable={false} decoding="sync" />
       ) : (
         <span className={styles.placeholder} aria-hidden="true">
           {category?.emoji ?? '👕'}
