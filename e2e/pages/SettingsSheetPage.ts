@@ -91,6 +91,40 @@ export class SettingsSheetPage {
     return this.categoryRow(name).getByTestId('kategorie-geaendert')
   }
 
+  // --- Sicherung ------------------------------------------------------
+
+  get backupStatus(): Locator {
+    return this.root.getByTestId('sicherung-status')
+  }
+
+  /** Loest den Export aus und gibt den Pfad der heruntergeladenen Datei zurueck. */
+  async exportBackup(): Promise<{ path: string; fileName: string }> {
+    const downloadPromise = this.page.waitForEvent('download')
+    await this.root.getByTestId('sicherung-export').click()
+
+    const download = await downloadPromise
+    const path = await download.path()
+    if (!path) throw new Error('Kein Download angekommen')
+
+    return { path, fileName: download.suggestedFilename() }
+  }
+
+  /** Spielt eine Sicherung ein - inklusive der Rueckfrage davor. */
+  async importBackup(filePath: string): Promise<void> {
+    await this.root.getByTestId('sicherung-import').click()
+    await expect(this.root.getByTestId('sicherung-bestaetigung')).toBeVisible()
+
+    await this.root.getByTestId('sicherung-datei-waehlen').click()
+    await this.root.getByTestId('sicherung-datei').setInputFiles(filePath)
+
+    await expect(this.backupStatus).toBeVisible()
+  }
+
+  async cancelImport(): Promise<void> {
+    await this.root.getByTestId('sicherung-import').click()
+    await this.root.getByTestId('sicherung-abbrechen').click()
+  }
+
   async close(): Promise<void> {
     await this.root.getByTestId('einstellungen-fertig').click()
     await expect(this.root).toBeHidden()

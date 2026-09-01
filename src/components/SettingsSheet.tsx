@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
+import { BackupError, backupFileName } from '../data/backup.ts'
 import { useClothes } from '../data/ClothesProvider.tsx'
 import type { Category } from '../data/types.ts'
+import { downloadBlob } from '../lib/download.ts'
 import { formatTimestamp } from '../lib/eventText.ts'
 import styles from './SettingsSheet.module.css'
 
@@ -228,6 +230,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </div>
         </section>
 
+        <BackupSection />
+
         <button
           type="button"
           className={styles.done}
@@ -238,6 +242,146 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Sicherung als ZIP.
+ *
+ * Steht bewusst in den Einstellungen ganz unten mit einem erklaerenden Satz: ohne
+ * Sync ist das der einzige Weg, die Fotos zu retten, wenn der Browser aufraeumt,
+ * die Adresse wechselt oder das Geraet verloren geht.
+ */
+function BackupSection() {
+  const { items, exportBackup, importBackup } = useClothes()
+
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null)
+  const [confirming, setConfirming] = useState(false)
+
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  async function handleExport() {
+    setBusy(true)
+    setStatus(null)
+
+    try {
+      downloadBlob(await exportBackup(), backupFileName())
+      setStatus({ text: 'Sicherung erstellt.', error: false })
+    } catch (cause) {
+      console.error('[Sicherung] Export fehlgeschlagen', cause)
+      setStatus({ text: 'Die Sicherung konnte nicht erstellt werden.', error: true })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setBusy(true)
+    setStatus(null)
+    setConfirming(false)
+
+    try {
+      const result = await importBackup(new Uint8Array(await file.arrayBuffer()))
+      setStatus({
+        text: `${result.items} ${result.items === 1 ? 'Stück' : 'Stücke'} wiederhergestellt.`,
+        error: false,
+      })
+    } catch (cause) {
+      console.error('[Sicherung] Import fehlgeschlagen', cause)
+      setStatus({
+        text:
+          cause instanceof BackupError
+            ? cause.message
+            : 'Die Sicherung konnte nicht gelesen werden.',
+        error: true,
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className={styles.section} data-testid="sicherung">
+      <h2 className={styles.sectionTitle}>Sicherung</h2>
+
+      <p className={styles.hint}>
+        Alle Fotos liegen nur auf diesem Gerät. Räumt der Browser auf oder geht das
+        Gerät verloren, sind sie weg. Lade dir ab und zu eine Sicherung herunter.
+      </p>
+
+      <div className={styles.backupActions}>
+        <button
+          type="button"
+          className={styles.backupButton}
+          disabled={busy}
+          data-testid="sicherung-export"
+          onClick={() => void handleExport()}
+        >
+          {items.length === 0 ? 'Exportieren' : `Exportieren (${items.length})`}
+        </button>
+
+        <button
+          type="button"
+          className={styles.backupButton}
+          disabled={busy}
+          data-testid="sicherung-import"
+          onClick={() => setConfirming(true)}
+        >
+          Wiederherstellen
+        </button>
+      </div>
+
+      {confirming && (
+        <div className={styles.confirm} data-testid="sicherung-bestaetigung">
+          <span>
+            Wiederherstellen ersetzt den gesamten Inhalt dieser App. Alles, was jetzt hier
+            liegt, wird durch die Sicherung überschrieben.
+          </span>
+
+          <div className={styles.confirmActions}>
+            <button
+              type="button"
+              className={styles.secondary}
+              data-testid="sicherung-abbrechen"
+              onClick={() => setConfirming(false)}
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              className={styles.primary}
+              data-testid="sicherung-datei-waehlen"
+              onClick={() => fileRef.current?.click()}
+            >
+              Datei wählen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status && (
+        <p
+          className={`${styles.status} ${status.error ? styles.statusError : ''}`}
+          data-testid="sicherung-status"
+        >
+          {status.text}
+        </p>
+      )}
+
+      <input
+        ref={fileRef}
+        className={styles.hiddenInput}
+        type="file"
+        accept=".zip,application/zip"
+        data-testid="sicherung-datei"
+        onChange={(e) => void handleFile(e)}
+      />
+    </section>
   )
 }
 
