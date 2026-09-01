@@ -1,0 +1,54 @@
+.banner {
+  position: fixed;
+  z-index: 30;
+
+  left: calc(var(--safe-left) + var(--sp-3));
+  right: calc(var(--safe-right) + var(--sp-3));
+  top: calc(var(--safe-top) + var(--sp-3));
+
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+
+  animation: slideIn 320ms var(--ease-out);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.reload {
+  flex: 0 0 auto;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.reload:disabled {
+  opacity: 0.6;
+}
+
+.dismiss {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
