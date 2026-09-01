@@ -50,6 +50,9 @@ export interface ClothesContextValue {
     patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder'>>,
   ) => Promise<void>
   deleteCategory: (id: Id) => Promise<number>
+  moveCategory: (id: Id, direction: 'up' | 'down') => Promise<void>
+  /** Anzahl Kleidungsstuecke je Kategorie - fuer die Warnung vor dem Loeschen. */
+  itemsPerCategory: Map<Id, number>
 
   renameHousehold: (id: Id, name: string) => Promise<void>
 
@@ -126,6 +129,21 @@ export function ClothesProvider({
     [db],
   )
 
+  /*
+   * Aus den geladenen Stuecken abgeleitet statt getrennt gehalten: so kann die Zahl
+   * niemals von der Anzeige abweichen.
+   */
+  const itemsPerCategory = useMemo(() => {
+    const counts = new Map<Id, number>()
+
+    for (const item of items) {
+      if (!item.categoryId) continue
+      counts.set(item.categoryId, (counts.get(item.categoryId) ?? 0) + 1)
+    }
+
+    return counts
+  }, [items])
+
   const value = useMemo<ClothesContextValue>(() => {
     /** Schreibzugriffe brauchen eine offene Datenbank - vorher gibt es keine UI. */
     const need = () => {
@@ -195,6 +213,14 @@ export function ClothesProvider({
         return affected
       },
 
+      moveCategory: async (id, direction) => {
+        const handle = need()
+        await repo.moveCategory(handle, id, direction)
+        setCategories(await repo.listCategories(handle))
+      },
+
+      itemsPerCategory,
+
       renameHousehold: async (id, name) => {
         const handle = need()
         await repo.renameHousehold(handle, id, name)
@@ -204,7 +230,17 @@ export function ClothesProvider({
       loadImages,
       listEvents,
     }
-  }, [db, error, households, categories, items, refreshItems, loadImages, listEvents])
+  }, [
+    db,
+    error,
+    households,
+    categories,
+    items,
+    itemsPerCategory,
+    refreshItems,
+    loadImages,
+    listEvents,
+  ])
 
   return <ClothesContext.Provider value={value}>{children}</ClothesContext.Provider>
 }

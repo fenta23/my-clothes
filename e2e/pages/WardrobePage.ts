@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { AddClothingSheetPage } from './AddClothingSheetPage.ts'
 import { ItemDetailSheetPage } from './ItemDetailSheetPage.ts'
 import { LanePage } from './LanePage.ts'
+import { SettingsSheetPage } from './SettingsSheetPage.ts'
 import { pointerDrag, type PointerType } from './gestures.ts'
 
 /**
@@ -20,6 +21,7 @@ export class WardrobePage {
   readonly bottom: LanePage
   readonly addSheet: AddClothingSheetPage
   readonly detailSheet: ItemDetailSheetPage
+  readonly settings: SettingsSheetPage
 
   constructor(private readonly page: Page) {
     this.top = new LanePage(page, 'lane-top')
@@ -27,6 +29,15 @@ export class WardrobePage {
     this.bottom = new LanePage(page, 'lane-bottom')
     this.addSheet = new AddClothingSheetPage(page)
     this.detailSheet = new ItemDetailSheetPage(page)
+    this.settings = new SettingsSheetPage(page)
+  }
+
+  /** Oeffnet die Einstellungen. */
+  async openSettings(): Promise<SettingsSheetPage> {
+    await this.page.getByTestId('settings-button').click()
+    await expect(this.settings.root).toBeVisible()
+
+    return this.settings
   }
 
   async open(): Promise<void> {
@@ -88,5 +99,20 @@ export class WardrobePage {
 
   card(title: string): Locator {
     return this.page.locator(`[data-testid="clothing-card"][data-title="${title}"]`)
+  }
+
+  /**
+   * Wie viele Pixel das Dokument ueber den sichtbaren Bereich hinausragt.
+   *
+   * Alles ueber 0 heisst: die Seite laesst sich verschieben - in einer
+   * Home-Screen-App wirkt das wie ein Defekt.
+   */
+  async documentOverflow(): Promise<number> {
+    return this.page.evaluate(() => {
+      const el = document.scrollingElement
+      if (!el) throw new Error('Kein scrollendes Element')
+
+      return el.scrollHeight - el.clientHeight
+    })
   }
 }

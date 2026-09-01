@@ -363,6 +363,52 @@ export async function deleteCategory(db: DB, id: Id, at = Date.now()): Promise<n
   return affected.length
 }
 
+/**
+ * Verschiebt eine Kategorie in der Reihenfolge um eine Position.
+ *
+ * Tauscht die Sortiernummern mit dem Nachbarn, statt alle neu zu vergeben - so
+ * bleibt die Aenderung auf zwei Datensaetze begrenzt. Am Rand der Liste passiert
+ * nichts; das ist kein Fehler, sondern das erwartete Verhalten.
+ */
+export async function moveCategory(
+  db: DB,
+  id: Id,
+  direction: 'up' | 'down',
+  at = Date.now(),
+): Promise<boolean> {
+  const ordered = await listCategories(db)
+  const index = ordered.findIndex((c) => c.id === id)
+  if (index === -1) return false
+
+  const neighbourIndex = direction === 'up' ? index - 1 : index + 1
+  const current = ordered[index]
+  const neighbour = ordered[neighbourIndex]
+  if (!current || !neighbour) return false
+
+  const tx = db.transaction('categories', 'readwrite')
+
+  await Promise.all([
+    tx.store.put({ ...current, sortOrder: neighbour.sortOrder, updatedAt: at }),
+    tx.store.put({ ...neighbour, sortOrder: current.sortOrder, updatedAt: at }),
+    tx.done,
+  ])
+
+  return true
+}
+
+/** Anzahl der Kleidungsstuecke je Kategorie - fuer die Warnung vor dem Loeschen. */
+export async function countItemsPerCategory(db: DB): Promise<Map<Id, number>> {
+  const items = await db.getAll('items')
+  const counts = new Map<Id, number>()
+
+  for (const item of items) {
+    if (!item.categoryId) continue
+    counts.set(item.categoryId, (counts.get(item.categoryId) ?? 0) + 1)
+  }
+
+  return counts
+}
+
 // ---------------------------------------------------------------- Haushalte
 
 export async function renameHousehold(

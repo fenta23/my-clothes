@@ -56,9 +56,43 @@ export async function pointerDrag(
       }
 
       fire('pointerup', end.x, end.y)
+
+      /*
+       * Ein echter Browser schickt nach dem pointerup noch ein click-Ereignis.
+       * dnd-kit haelt genau dafuer einen Abfang bereit, damit ein Ziehen nicht
+       * als Klick durchschlaegt. Ohne dieses click bleibt der Abfang scharf und
+       * verschluckt den naechsten echten Klick irgendwo in der App - ein
+       * Artefakt der synthetischen Geste, kein Fehler der Anwendung.
+       */
+      const target = document.elementFromPoint(end.x, end.y) ?? document.body
+      target.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          clientX: end.x,
+          clientY: end.y,
+        }),
+      )
     },
     { start, end, pointerType },
   )
+
+  /*
+   * Auf dnd-kits Aufraeumfenster warten.
+   *
+   * Beim Start eines Drags registriert der Sensor auf dem Dokument einen
+   * click-Listener in der Capture-Phase, der stopPropagation aufruft - damit ein
+   * Ziehen nicht zusaetzlich als Klick durchschlaegt. Entfernt wird er in
+   * detach() erst nach `setTimeout(…, 50)`. Wer frueher klickt, dessen Klick
+   * wird verschluckt.
+   *
+   * Fuer einen Menschen ist das unsichtbar: kein Finger wandert in 50 ms von
+   * einer Karte zu einem anderen Knopf. Nur der Test ist schneller als jede
+   * Hand. Das ist also kein Wartetrick gegen Flakiness, sondern das Abwarten
+   * eines festen, dokumentierten Fensters der Bibliothek.
+   */
+  await page.waitForTimeout(120)
 }
 
 async function center(locator: Locator): Promise<{ x: number; y: number }> {

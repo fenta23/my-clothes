@@ -1,5 +1,15 @@
 .screen {
-  height: 100dvh;
+  /*
+   * `100%` statt `100dvh`: html, body und #root arbeiten bereits mit Prozent.
+   * Zwei Hoehensysteme nebeneinander weichen auf iOS im Subpixelbereich
+   * voneinander ab - und schon das machte das Dokument scrollbar.
+   */
+  height: 100%;
+
+  /* Bezugspunkt fuer den absolut gesetzten Hinzufuegen-Knopf. Ohne das bezieht
+     er sich auf den Ursprungs-Block der Seite und kann sie verlaengern. */
+  position: relative;
+
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
@@ -12,6 +22,16 @@
 }
 
 .topBar {
+  /*
+   * Die Kopfzeile ist kein Scroller und soll auch keine Geste ausloesen - sie
+   * war der bequemste Griff, um die ganze Seite zu verschieben.
+   *
+   * Bewusst nur hier und nicht auf `.screen`: touch-action wirkt auf alle
+   * Nachfahren, ein `none` weiter oben wuerde das waagerechte Scrollen der
+   * Bahnen abschalten.
+   */
+  touch-action: none;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
