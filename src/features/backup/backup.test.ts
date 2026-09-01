@@ -21,6 +21,7 @@ import {
 } from '../../entities/clothing/repository.ts'
 import { openClothesDB, type ClothesDB } from '../../entities/db.ts'
 import { listEvents } from '../../entities/event/repository.ts'
+import { createOutfit, listOutfits } from '../../entities/outfit/repository.ts'
 import { listHouseholds, renameHousehold } from '../../entities/household/repository.ts'
 import { seedIfEmpty } from '../../entities/seed.ts'
 
@@ -158,6 +159,43 @@ describe('importBackup', () => {
     expect(await listHouseholds(target)).toHaveLength(2)
     expect((await listItems(target))[0]?.title).toBe('Lieblingshose')
     expect(await listEvents(target, item.id)).toHaveLength(1)
+  })
+
+  it('nimmt Outfits mit durch Export und Import', async () => {
+    await seedIfEmpty(db, 1000)
+    const hose = await addItem('Lieblingshose')
+    await createOutfit(db, { name: 'Schultag', itemIds: [hose.id] }, 3000)
+    const archive = await archiveOf(db)
+
+    const target = await freshDb()
+    await importBackup(target, archive)
+
+    const [outfit] = await listOutfits(target)
+    expect(outfit?.name).toBe('Schultag')
+    // Der Verweis muss auf dasselbe Stueck zeigen, nicht auf ein neu vergebenes.
+    expect(outfit?.itemIds).toEqual([hose.id])
+  })
+
+  it('liest eine Sicherung ohne Outfits weiterhin', async () => {
+    /*
+     * Der Grund, warum das Format bei 1 bleibt: eine Sicherung, die vor den Outfits
+     * entstanden ist, muss lesbar bleiben. Ein Sprung auf Format 2 haette jede
+     * vorhandene Datei entwertet.
+     */
+    await seedIfEmpty(db, 1000)
+    await addItem('Lieblingshose')
+    const archive = await archiveOf(db)
+
+    const { data } = readBackup(archive)
+    delete (data as { outfits?: unknown }).outfits
+
+    const alt = zipSync({ 'daten.json': new TextEncoder().encode(JSON.stringify(data)) })
+
+    const target = await freshDb()
+    await importBackup(target, alt)
+
+    expect(await listOutfits(target)).toEqual([])
+    expect(await listItems(target)).toHaveLength(1)
   })
 
   it('stellt die Bilder unveraendert wieder her', async () => {
