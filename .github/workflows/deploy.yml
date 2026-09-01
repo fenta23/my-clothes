@@ -50,6 +50,10 @@ jobs:
 
       - name: Bauen
         run: npm run build
+        env:
+          # Ohne diese Variable zeigen Impressum und Datenschutz einen sichtbaren
+          # Platzhalter - ein unvollstaendiges Impressum soll auffallen.
+          VITE_CONTROLLER_NAME: ${{ vars.CONTROLLER_NAME }}
 
       - uses: actions/configure-pages@v5
 

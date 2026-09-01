@@ -93,9 +93,19 @@ Home-Screen-App navigiert nie — sie wird geöffnet und bleibt tagelang im Hint
 Mit `autoUpdate` lädt der Browser zwar neue Dateien, die laufende App zeigt aber
 weiter die alte Fassung, bis sie zufällig komplett neu startet.
 
-Stattdessen fragt die App selbst nach: beim Zurückkehren in den Vordergrund, beim
-Fokussieren des Fensters und stündlich (`src/lib/updateChecks.ts`). Der wichtigste
-Auslöser ist die Rückkehr in den Vordergrund — genau dann schaut jemand auf die App.
+Stattdessen fragt die App selbst nach (`src/features/app-update/updateChecks.ts`) —
+und zwar bei **jedem** plausiblen Signal: `visibilitychange`, `pageshow`, `focus`,
+`online`, sowie beim ersten Antippen nach einer Minute Ruhe.
+
+Der Grund für diese Breite: mit `visibilitychange` allein kam die Meldung auf einem
+iPhone nur, wenn die App vorher vollständig beendet war — aus dem Hintergrund heraus
+nicht. WebKit feuert das Ereignis bei einer Standalone-App auf dem Weg zurück in den
+Vordergrund offenbar nicht verlässlich. Das Antippen ist die letzte Sicherung: wer
+die App bedient, ist ganz sicher da.
+
+Zwei verschiedene Bremsen, weil die Signale verschieden sind: Lebenszyklus-Ereignisse
+feuern im Bündel, deshalb wird nur keine zweite Abfrage gestartet, solange eine läuft.
+Antippen passiert dutzendfach pro Minute und bekommt deshalb eine echte Sperrfrist.
 
 Steht eine neue Fassung bereit, erscheint oben ein Banner „Neue Version verfügbar"
 mit einem Knopf zum Neuladen. Bewusst kein selbsttätiges Neuladen: die App könnte
@@ -104,6 +114,25 @@ gerade mitten in der Aufnahme eines Fotos sein.
 `e2e/update.spec.ts` prüft den Weg vollständig — es baut die App, liefert sie über
 einen eigenen Server aus, täuscht durch eine veränderte `sw.js` eine
 Neuveröffentlichung vor und erwartet Banner, Neuladen und den Erhalt der Daten.
+Vier weitere Fälle prüfen, dass die App die Abfrage **selbst** auslöst, ohne dass der
+Test `update()` aufruft — genau diese Lücke ließ den Fehler auf dem Gerät durchgehen.
+
+## Menü und Rechtliches
+
+Einstellungen, Datenschutz und Impressum liegen in einer Seitenleiste
+(`src/app/MainMenu.tsx`), die von rechts einfährt und in sich selbst navigiert statt
+Blätter zu stapeln.
+
+Der Name des Verantwortlichen kommt beim Bauen aus `VITE_CONTROLLER_NAME` und steht
+damit nicht im öffentlichen Quelltext. Lokal: `.env.example` nach `.env` kopieren.
+Für den Deploy als Repository-Variable setzen:
+
+```bash
+gh variable set CONTROLLER_NAME --body "Vorname Nachname"
+```
+
+Fehlt die Angabe, zeigen beide Panels einen deutlich sichtbaren Warnhinweis — ein
+unvollständiges Impressum soll auffallen, nicht als leere Zeile durchgehen.
 
 ## Bilder und Geschwindigkeit
 

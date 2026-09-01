@@ -146,9 +146,10 @@ test.describe('Verhalten bei vollem Schrank', () => {
     const loadMs = Date.now() - startLoad
 
     // Reaktion auf eine Eingabe nach dem Laden: der eigentliche Gebrauchswert.
+    // Ueber das Page Object statt ueber rohe Kennungen - beim Umbau auf die
+    // Seitenleiste war dieser Test der einzige, der brach, weil er daran vorbeigriff.
     const startTap = Date.now()
-    await page.getByTestId('settings-button').click()
-    await expect(page.getByTestId('settings-sheet')).toBeVisible()
+    await wardrobe.openMenu()
     const tapMs = Date.now() - startTap
 
     const storage = await page.evaluate(async () => {

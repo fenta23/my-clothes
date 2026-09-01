@@ -125,8 +125,9 @@ export class SettingsSheetPage {
     await this.root.getByTestId('sicherung-abbrechen').click()
   }
 
+  /** Schliesst die Seitenleiste samt Einstellungen. */
   async close(): Promise<void> {
-    await this.root.getByTestId('einstellungen-fertig').click()
+    await this.page.getByTestId('menue-schliessen').click()
     await expect(this.root).toBeHidden()
   }
 }
