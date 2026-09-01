@@ -15,6 +15,7 @@ import { AddClothingSheet } from './AddClothingSheet.tsx'
 import { ClothingCardOverlay } from './ClothingCard.tsx'
 import { ItemDetailSheet } from './ItemDetailSheet.tsx'
 import { Lane, refFromDropId } from './Lane.tsx'
+import { SettingsSheet } from './SettingsSheet.tsx'
 import styles from './Wardrobe.module.css'
 
 /**
@@ -30,6 +31,7 @@ export function Wardrobe() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [openItemId, setOpenItemId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [filter, setFilter] = useState<Set<string>>(new Set())
 
   /*
@@ -111,6 +113,16 @@ export function Wardrobe() {
 
       <div className={styles.topBar}>
         <span className={styles.brand}>Kleiderschrank</span>
+
+        <button
+          type="button"
+          className={`glass glass--pill ${styles.iconButton}`}
+          aria-label="Einstellungen"
+          data-testid="settings-button"
+          onClick={() => setSettingsOpen(true)}
+        >
+          <span aria-hidden="true">⚙︎</span>
+        </button>
       </div>
 
       <div className={styles.filterRow} role="group" aria-label="Nach Kategorie filtern">
@@ -204,6 +216,7 @@ export function Wardrobe() {
       </button>
 
       {adding && <AddClothingSheet onClose={() => setAdding(false)} />}
+      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
       {openItem && (
         <ItemDetailSheet item={openItem} onClose={() => setOpenItemId(null)} />
       )}

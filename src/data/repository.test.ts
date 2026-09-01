@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { openClothesDB, type ClothesDB } from './db.ts'
 import { DEFAULT_CATEGORIES } from './defaults.ts'
 import {
+  countItemsPerCategory,
   createCategory,
   createItem,
   deleteCategory,
@@ -21,6 +22,7 @@ import {
   listEvents,
   listHouseholds,
   listItems,
+  moveCategory,
   moveItem,
   renameHousehold,
   renameItem,
@@ -340,5 +342,83 @@ describe('listItems', () => {
     )
 
     expect((await listItems(db)).map((i) => i.id)).toEqual([neu.id, alt.id])
+  })
+})
+
+describe('moveCategory', () => {
+  it('tauscht eine Kategorie mit ihrem Vorgaenger', async () => {
+    await seedIfEmpty(db, 1000)
+    const before = await listCategories(db)
+    const zweite = before[1]!
+
+    expect(await moveCategory(db, zweite.id, 'up', 5000)).toBe(true)
+
+    const after = await listCategories(db)
+    expect(after[0]?.id).toBe(zweite.id)
+    expect(after[1]?.id).toBe(before[0]?.id)
+  })
+
+  it('tauscht eine Kategorie mit ihrem Nachfolger', async () => {
+    await seedIfEmpty(db, 1000)
+    const erste = (await listCategories(db))[0]!
+
+    await moveCategory(db, erste.id, 'down', 5000)
+
+    expect((await listCategories(db))[1]?.id).toBe(erste.id)
+  })
+
+  it('tut am oberen Rand nichts', async () => {
+    await seedIfEmpty(db, 1000)
+    const before = await listCategories(db)
+
+    expect(await moveCategory(db, before[0]!.id, 'up')).toBe(false)
+    expect((await listCategories(db)).map((c) => c.id)).toEqual(before.map((c) => c.id))
+  })
+
+  it('tut am unteren Rand nichts', async () => {
+    await seedIfEmpty(db, 1000)
+    const before = await listCategories(db)
+
+    expect(await moveCategory(db, before.at(-1)!.id, 'down')).toBe(false)
+    expect((await listCategories(db)).map((c) => c.id)).toEqual(before.map((c) => c.id))
+  })
+
+  it('meldet false fuer eine unbekannte Kategorie', async () => {
+    expect(await moveCategory(db, 'gibtsnicht', 'up')).toBe(false)
+  })
+
+  it('behaelt eine luecklose Sortierung bei', async () => {
+    await seedIfEmpty(db, 1000)
+    const zweite = (await listCategories(db))[1]!
+
+    await moveCategory(db, zweite.id, 'up', 5000)
+
+    const orders = (await listCategories(db)).map((c) => c.sortOrder)
+    expect(orders).toEqual(orders.map((_, i) => i))
+  })
+})
+
+describe('countItemsPerCategory', () => {
+  it('zaehlt je Kategorie', async () => {
+    const hose = await createCategory(db, { name: 'Hose', emoji: '👖', colorHex: '#000' })
+    const rock = await createCategory(db, { name: 'Rock', emoji: '🩱', colorHex: '#111' })
+
+    const a = await addItem(null, 'A')
+    const b = await addItem(null, 'B')
+    await addItem(null, 'C')
+
+    await setItemCategory(db, a.id, hose.id, 3000)
+    await setItemCategory(db, b.id, hose.id, 3000)
+
+    const counts = await countItemsPerCategory(db)
+    expect(counts.get(hose.id)).toBe(2)
+    // Unbenutzte Kategorien tauchen gar nicht auf, statt mit 0 gefuehrt zu werden.
+    expect(counts.has(rock.id)).toBe(false)
+  })
+
+  it('ignoriert unkategorisierte Stuecke', async () => {
+    await addItem(null, 'Ohne')
+
+    expect((await countItemsPerCategory(db)).size).toBe(0)
   })
 })
