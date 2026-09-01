@@ -24,7 +24,18 @@ export default defineConfig({
     basicSsl(),
 
     VitePWA({
-      registerType: 'autoUpdate',
+      /*
+       * 'prompt' statt 'autoUpdate': eine Home-Screen-App wird nicht neu geladen,
+       * nur weil im Hintergrund neue Dateien liegen - sie laeuft tage- oder
+       * wochenlang weiter mit der alten Fassung. Mit 'prompt' meldet sich die App
+       * selbst, sobald eine neue Version bereitsteht.
+       */
+      registerType: 'prompt',
+
+      // Registriert wird von Hand in useAppUpdate; ohne das entstuende eine
+      // zweite, konkurrierende Registrierung.
+      injectRegister: null,
+
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Kleiderschrank',

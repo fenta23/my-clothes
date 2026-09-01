@@ -56,6 +56,25 @@ Service Worker. Lokal geht es ebenfalls:
 Ein selbstsigniertes Zertifikat reicht **nicht** für den Service Worker: Safari lehnt die
 Registrierung trotz bestätigter Warnung ab. Offline-Tests deshalb über die Live-URL.
 
+## Updates
+
+Der Service Worker läuft im Modus `prompt`, nicht `autoUpdate`. Grund: eine
+Home-Screen-App navigiert nie — sie wird geöffnet und bleibt tagelang im Hintergrund.
+Mit `autoUpdate` lädt der Browser zwar neue Dateien, die laufende App zeigt aber
+weiter die alte Fassung, bis sie zufällig komplett neu startet.
+
+Stattdessen fragt die App selbst nach: beim Zurückkehren in den Vordergrund, beim
+Fokussieren des Fensters und stündlich (`src/lib/updateChecks.ts`). Der wichtigste
+Auslöser ist die Rückkehr in den Vordergrund — genau dann schaut jemand auf die App.
+
+Steht eine neue Fassung bereit, erscheint oben ein Banner „Neue Version verfügbar"
+mit einem Knopf zum Neuladen. Bewusst kein selbsttätiges Neuladen: die App könnte
+gerade mitten in der Aufnahme eines Fotos sein.
+
+`e2e/update.spec.ts` prüft den Weg vollständig — es baut die App, liefert sie über
+einen eigenen Server aus, täuscht durch eine veränderte `sw.js` eine
+Neuveröffentlichung vor und erwartet Banner, Neuladen und den Erhalt der Daten.
+
 ## Wichtig: Datenhaltbarkeit
 
 Die Daten hängen am **Origin** (der URL). Ändert sich die Domain, sind die Fotos weg.
