@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { pointerDrag } from './pages/gestures.ts'
 import { WardrobePage } from './pages/WardrobePage.ts'
 
 /*
@@ -21,6 +22,64 @@ test('startet mit zwei Haushalten und einer leeren Mitte', async () => {
   await wardrobe.top.expectCount(0)
   await wardrobe.inbox.expectCount(0)
   await wardrobe.bottom.expectCount(0)
+})
+
+test.describe('Die Seite steht still', () => {
+  /*
+   * Prueft die Ursache, nicht das Symptom: solange das Dokument gar nicht
+   * scrollbar ist, kann auch keine Geste es verschieben - egal wo man anfasst.
+   */
+  test('das Dokument ist ueberhaupt nicht scrollbar', async ({ page }) => {
+    const overflow = await page.evaluate(() => {
+      const el = document.scrollingElement
+      if (!el) throw new Error('Kein scrollendes Element')
+
+      return {
+        vertikal: el.scrollHeight - el.clientHeight,
+        waagerecht: el.scrollWidth - el.clientWidth,
+      }
+    })
+
+    expect(overflow.vertikal).toBeLessThanOrEqual(0)
+    expect(overflow.waagerecht).toBeLessThanOrEqual(0)
+  })
+
+  test('senkrechtes Ziehen an der Kopfzeile verschiebt nichts', async ({ page }) => {
+    // Genau die Geste, die auf dem iPhone 12 die ganze Seite verschoben hat.
+    const titel = page.getByText('Kleiderschrank', { exact: true })
+    await pointerDrag(page, titel, wardrobe.bottom.root, 'touch')
+
+    const scrollTop = await page.evaluate(() => document.scrollingElement?.scrollTop ?? -1)
+    expect(scrollTop).toBe(0)
+  })
+
+  test('bleibt auch mit vielen Kleidungsstuecken unbeweglich', async () => {
+    // Volle Bahnen sind der Fall, in dem Ueberlauf am ehesten entsteht.
+    await wardrobe.addItem('Hose eins', { category: 'Hose' })
+    await wardrobe.addItem('Hose zwei', { category: 'Hose' })
+    await wardrobe.addItem('Shirt eins', { category: 'T-Shirt' })
+
+    const overflow = await wardrobe.documentOverflow()
+    expect(overflow).toBeLessThanOrEqual(0)
+  })
+
+  test('laesst die Bahnen weiterhin waagerecht scrollen', async ({ page }) => {
+    await wardrobe.addItem('Hose eins')
+    await wardrobe.addItem('Hose zwei')
+
+    // Die Bahn bringt ihren eigenen Scroller mit - der darf nicht mitgesperrt sein.
+    const canScroll = await page.evaluate(() => {
+      const scroller = document
+        .querySelector('[data-testid="lane-inbox"]')
+        ?.querySelector('[data-testid="lane-scroller"]')
+
+      if (!scroller) throw new Error('Bahn-Scroller nicht gefunden')
+
+      return getComputedStyle(scroller).overflowX
+    })
+
+    expect(canScroll).toBe('auto')
+  })
 })
 
 test('legt die Startkategorien genau einmal an', async ({ page }) => {

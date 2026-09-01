@@ -11,10 +11,28 @@
   padding: 0;
 }
 
+/*
+ * Das Dokument selbst darf sich nicht bewegen - die App soll stehen wie eine
+ * native. Gescrollt wird ausschliesslich in den Bahnen (waagerecht) und in den
+ * Sheets (senkrecht), beide bringen ihren eigenen Scroller mit.
+ *
+ * `overflow: hidden` ist dafuer der entscheidende Teil: `overscroll-behavior`
+ * unterdrueckt nur das Gummiband und die Weitergabe an uebergeordnete Scroller,
+ * nicht aber das Scrollen von tatsaechlich ueberstehendem Inhalt.
+ */
 html,
 body,
 #root {
   height: 100%;
+  overflow: hidden;
+}
+
+/*
+ * Auch auf html, nicht nur auf body: der Wert wird nur dann zuverlaessig auf den
+ * Viewport uebertragen.
+ */
+html {
+  overscroll-behavior: none;
 }
 
 body {

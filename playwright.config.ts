@@ -26,9 +26,13 @@ export default defineConfig({
     },
     {
       name: 'iphone-touch',
-      // WebKit mit Touch-Emulation - so nah an Safari auf dem iPhone, wie es
-      // ohne echtes Geraet geht.
-      use: { ...devices['iPhone 15 Pro'] },
+      /*
+       * WebKit mit Touch-Emulation - so nah an Safari auf dem iPhone, wie es
+       * ohne echtes Geraet geht. Bewusst ein iPhone 12: das ist das Geraet, auf
+       * dem die App tatsaechlich benutzt wird, und sein knapper Viewport deckt
+       * ueberstehenden Inhalt frueher auf als ein groesseres Modell.
+       */
+      use: { ...devices['iPhone 12'] },
     },
   ],
 
