@@ -6,6 +6,7 @@ import { createCategory } from '../category/repository.ts'
 import type { Db } from '../db.ts'
 import { listEvents } from '../event/repository.ts'
 import { listHouseholds, renameHousehold } from '../household/repository.ts'
+import { createOutfit, listOutfits } from '../outfit/repository.ts'
 import { seedIfEmpty } from '../seed.ts'
 import { freshDb, testBlob } from '../testDb.ts'
 import {
@@ -214,6 +215,23 @@ describe('deleteItem', () => {
     expect(await listItems(db)).toHaveLength(0)
     expect(await getImages(db, item.id)).toBeUndefined()
     expect(await listEvents(db, item.id)).toHaveLength(0)
+  })
+
+  it('nimmt das Stueck auch aus jedem Outfit heraus', async () => {
+    const jeans = await addItem(null, 'Jeans')
+    const shirt = await addItem(null, 'Shirt')
+    await createOutfit(db, { name: 'Schultag', itemIds: [jeans.id, shirt.id] }, 1000)
+    await createOutfit(db, { name: 'Ohne Jeans', itemIds: [shirt.id] }, 1000)
+
+    await deleteItem(db, jeans.id, 7000)
+
+    const outfits = await listOutfits(db)
+    // Kein Outfit darf auf ein Stueck zeigen, das es nicht mehr gibt.
+    expect(outfits.flatMap((o) => o.itemIds)).not.toContain(jeans.id)
+    expect(outfits.find((o) => o.name === 'Schultag')?.itemIds).toEqual([shirt.id])
+    expect(outfits.find((o) => o.name === 'Schultag')?.updatedAt).toBe(7000)
+    // Unbeteiligte Outfits bleiben unangetastet.
+    expect(outfits.find((o) => o.name === 'Ohne Jeans')?.updatedAt).toBe(1000)
   })
 
   it('laesst andere Kleidungsstuecke unberuehrt', async () => {
