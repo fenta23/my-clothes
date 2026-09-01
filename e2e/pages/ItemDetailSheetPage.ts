@@ -25,6 +25,23 @@ export class ItemDetailSheetPage {
     return this.root.getByTestId('verlauf-eintrag')
   }
 
+  get historyToggle(): Locator {
+    return this.root.getByTestId('verlauf-aufklappen')
+  }
+
+  /**
+   * Klappt den Verlauf auf.
+   *
+   * Er ist eingeklappt, weil er Nebeninformation ist - Tests muessen ihn also
+   * oeffnen wie ein Mensch, statt an den verborgenen Eintraegen zu lesen.
+   */
+  async openHistory(): Promise<void> {
+    if (await this.root.getByTestId('verlauf').isVisible()) return
+
+    await this.historyToggle.click()
+    await expect(this.root.getByTestId('verlauf')).toBeVisible()
+  }
+
   categoryChip(name: string): Locator {
     return this.root.locator(
       `[data-testid="detail-kategorie-chip"][data-category="${name}"]`,

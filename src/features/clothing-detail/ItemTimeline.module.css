@@ -22,3 +22,50 @@
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Aufklappbarer Rahmen --- */
+
+.details {
+  border-radius: var(--r-sm);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Das voreingestellte Dreieck von Safari und Chrome abschalten. */
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary::marker {
+  content: '';
+}
+
+.chevron {
+  display: inline-block;
+  transition: transform 160ms var(--ease-out);
+  color: var(--text-tertiary);
+}
+
+.details[open] .chevron {
+  transform: rotate(90deg);
+}
+
+.count {
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  padding-top: var(--sp-2);
+}

@@ -58,6 +58,8 @@ test('stellt Kleidung samt Foto und Verlauf wieder her', async () => {
   // Das Foto muss mitgekommen sein, nicht nur der Datensatz.
   const restored = await wardrobe.openItem('Lieblingshose')
   await expect(restored.photo).toBeVisible()
+
+  await restored.openHistory()
   await expect(restored.historyEntries()).toHaveCount(2)
   expect(await restored.historyTexts()).toContain('Neu → Haushalt 1')
 })
