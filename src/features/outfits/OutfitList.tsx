@@ -17,6 +17,15 @@ import styles from './OutfitList.module.css'
 /** Kantenlaenge eines Teils in der Uebersicht - klein genug fuer eine Kachel. */
 const PREVIEW_SIZE_PX = 40
 
+/**
+ * So viele Teile zeigt eine Kachel hoechstens.
+ *
+ * Gemessen in `e2e/performance.spec.ts`: ohne Deckel laedt die Uebersicht bei 40
+ * Outfits alle 200 Vorschaubilder auf einmal. Die vollstaendige Figur steht im Blatt,
+ * das immer nur ein Outfit zeigt.
+ */
+const PREVIEW_MAX_ITEMS = 3
+
 export function OutfitList({
   outfits,
   categoriesById,
@@ -86,7 +95,12 @@ function OutfitCard({
     >
       <span className={styles.name}>{outfit.name}</span>
 
-      <OutfitFigure items={items} categoriesById={categoriesById} size={PREVIEW_SIZE_PX} />
+      <OutfitFigure
+        items={items}
+        categoriesById={categoriesById}
+        size={PREVIEW_SIZE_PX}
+        max={PREVIEW_MAX_ITEMS}
+      />
 
       <span
         className={`${styles.status} ${verteilt ? styles.statusVerteilt : ''}`}

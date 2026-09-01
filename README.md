@@ -173,6 +173,16 @@ Fotos auf Bett oder Boden trotzdem ausgefranste Kanten liefert. Stattdessen blei
 die Fotos, wie sie sind, und stehen in der Reihenfolge, in der man sie anzieht. Die
 Silhouette dahinter ist reines CSS.
 
+Die Übersicht zeigt je Kachel **höchstens drei Teile**, der Rest steht als „+n" da.
+Das ist keine Geschmacksfrage: ohne Deckel lädt die Liste bei 40 Outfits mit je fünf
+Teilen alle 200 Vorschaubilder auf einmal — gemessen, nicht vermutet. Mit Deckel sind
+es höchstens 120, auf dem iPhone-Fenster rund 42. Die vollständige Figur steht im
+Blatt, das immer nur ein Outfit zeigt.
+
+Hier greift bewusst eine andere Schranke als bei den Bahnen: auf einem breiten
+Fenster passen alle Kacheln gleichzeitig auf den Schirm, dort hat `loading="lazy"`
+nichts auszulassen. Was die Last begrenzt, ist der Deckel.
+
 Welche Zeile ein Stück bekommt, sagt seine Kategorie über ihren **Trageort**
 (`slot`: Kopf, Oberteil, Einteiler, Unterteil, Füße, Sonstiges). Die Sortierung aus
 den Einstellungen taugt dafür nicht — sie ist die Reihenfolge der Liste, nicht die
@@ -211,6 +221,7 @@ iPhone 12 braucht länger):
 | Laden bis alle Karten da | ~680 ms |
 | Reaktion auf Antippen | ~78 ms |
 | Geladene Bilder | 72 von 200 |
+| Geladene Bilder, 40 Outfits | 120 von 200 (iPhone-Fenster: 42) |
 
 Die Zahlen stammen von synthetischen Bildern (16 KB Vorschau, 57 KB Original), die
 sich besser komprimieren als echte Fotos — bei echten iPhone-Aufnahmen ist eher mit

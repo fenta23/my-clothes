@@ -27,6 +27,12 @@ export function freshDb(prefix = 'test'): Promise<Db> {
  */
 export function openAtVersion(name: string, version: number): Promise<IDBPDatabase> {
   return openDB(name, version, {
+    /*
+     * Die Umdeutung ist hier vertretbar: `upgradeClothesDB` liest aus dem Handle
+     * ausschliesslich `objectStoreNames` und legt Stores an - beides unabhaengig vom
+     * Werttyp der Stores. Ein echter `Db` waere an dieser Stelle die groessere Luege,
+     * denn ein alter Stand hat das heutige Schema ja gerade noch nicht.
+     */
     upgrade: (db, oldVersion, newVersion) =>
       upgradeClothesDB(db as unknown as IDBPDatabase<ClothesDB>, oldVersion, newVersion ?? version),
   })

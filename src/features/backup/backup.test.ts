@@ -12,7 +12,8 @@ import {
   importBackup,
   readBackup,
 } from './backup.ts'
-import { listCategories } from '../../entities/category/repository.ts'
+import { listCategories, updateCategory } from '../../entities/category/repository.ts'
+import { slotFor } from '../../entities/category/slots.ts'
 import {
   createItem,
   getImages,
@@ -174,6 +175,25 @@ describe('importBackup', () => {
     expect(outfit?.name).toBe('Schultag')
     // Der Verweis muss auf dasselbe Stueck zeigen, nicht auf ein neu vergebenes.
     expect(outfit?.itemIds).toEqual([hose.id])
+  })
+
+  it('behaelt einen selbst gewaehlten Trageort', async () => {
+    /*
+     * Der Trageort ist ein optionales Feld; JSON laesst fehlende Felder einfach weg.
+     * Eine ausdrueckliche Angabe darf dabei nicht verloren gehen - sonst faellt die
+     * Kategorie nach dem Einspielen still auf das Raten ueber den Namen zurueck.
+     */
+    await seedIfEmpty(db, 1000)
+    const [hose] = await listCategories(db)
+    await updateCategory(db, hose!.id, { slot: 'kopf' }, 3000)
+    const archive = await archiveOf(db)
+
+    const target = await freshDb()
+    await importBackup(target, archive)
+
+    const wiederhergestellt = (await listCategories(target)).find((c) => c.id === hose!.id)
+    expect(wiederhergestellt?.slot).toBe('kopf')
+    expect(slotFor(wiederhergestellt!)).toBe('kopf')
   })
 
   it('liest eine Sicherung ohne Outfits weiterhin', async () => {

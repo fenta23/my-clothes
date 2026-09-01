@@ -21,19 +21,39 @@ export function OutfitFigure({
   items,
   categoriesById,
   size,
+  max,
 }: {
   items: readonly ClothingItem[]
   categoriesById: Map<Id, Category>
   /** Kantenlaenge eines Teils in CSS-Pixeln. */
   size: number
+  /**
+   * Hoechstzahl gezeigter Teile; der Rest erscheint als "+n".
+   *
+   * Gemessen und nicht geschaetzt: ohne Deckel laedt die Uebersicht bei 40 Outfits
+   * mit je fuenf Teilen alle 200 Vorschaubilder auf einmal - jedes 400er-JPEG belegt
+   * dekodiert rund 640 KB. Genau der Fehler, der bei den Bahnen schon einmal
+   * gemessen wurde.
+   */
+  max?: number
 }) {
   const zeilen = new Map<BodySlot, ClothingItem[]>()
+  let uebrig = max ?? Number.POSITIVE_INFINITY
+  let versteckt = 0
 
-  for (const item of items) {
-    const category = item.categoryId ? categoriesById.get(item.categoryId) : undefined
-    const slot = category ? slotFor(category) : 'sonstiges'
+  for (const slot of [...SLOT_ORDER, 'sonstiges' as const]) {
+    for (const item of items) {
+      const category = item.categoryId ? categoriesById.get(item.categoryId) : undefined
+      if ((category ? slotFor(category) : 'sonstiges') !== slot) continue
 
-    zeilen.set(slot, [...(zeilen.get(slot) ?? []), item])
+      if (uebrig <= 0) {
+        versteckt += 1
+        continue
+      }
+
+      uebrig -= 1
+      zeilen.set(slot, [...(zeilen.get(slot) ?? []), item])
+    }
   }
 
   const sonstiges = zeilen.get('sonstiges') ?? []
@@ -61,6 +81,12 @@ export function OutfitFigure({
           </div>
         )
       })}
+
+      {versteckt > 0 && (
+        <span className={styles.rest} data-testid="figur-rest">
+          +{versteckt}
+        </span>
+      )}
 
       {sonstiges.length > 0 && (
         <div className={styles.extras} data-testid="figur-zeile" data-slot="sonstiges">
