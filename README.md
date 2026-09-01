@@ -6,6 +6,10 @@ Installierbare Web-App (PWA), mit der Kleidungsstücke per Foto erfasst,
 kategorisiert und zwischen zwei Haushalten hin- und hergeschoben werden.
 Jeder Wechsel wird mit Zeitstempel protokolliert.
 
+Aus den Stücken lassen sich **Outfits** zusammenstellen. Weil die App weiß, wo jedes
+Teil gerade liegt, beantwortet sie die eigentliche Frage: *Kann ich das hier gerade
+anziehen?*
+
 Alle Daten liegen lokal im Browser (IndexedDB) — kein Server, kein Konto.
 
 ## Entwicklung
@@ -72,8 +76,8 @@ Zwei Regeln, die `src/architecture.test.ts` bei jedem Lauf prüft:
 
 1. **Importe zeigen nur nach unten.**
 2. **Ein Feature kennt kein anderes Feature.** Zusammengesetzt wird ausschließlich in
-   `app/` — deshalb liegen `Wardrobe.tsx` und `SettingsSheet.tsx` dort und nicht in
-   einem Feature.
+   `app/` — deshalb liegen `Shell.tsx`, `Wardrobe.tsx`, `Outfits.tsx` und `MainMenu.tsx`
+   dort und nicht in einem Feature.
 
 Der Test ersetzt eine Lint-Regel, die oxlint nicht mitbringt. Ohne Zwang verfällt
 jede Struktur wieder — es genügt ein bequemer Import.
@@ -144,13 +148,52 @@ aus einer globalen `.icon`-Klasse (`src/shared/styles/icons.css`) — `stroke-wi
 CSS, weil das die Präsentationsattribute des SVG überschreibt.
 
 Gemessen: 17 Icons kosten **+1,9 kB gzip** (95,3 → 97,2 kB). Tree-Shaking greift, im
-Bundle liegt kein ungenutztes Icon.
+Bundle liegt kein ungenutztes Icon. Mit den Outfits sind es 19 Icons und 100,8 kB.
 
 **Die Kategorie-Symbole bleiben bewusst Emoji.** Sie sind Daten, nicht Oberfläche:
 frei wählbar, auch für selbst erfundene Kategorien. Lucide deckt von den neun
 Startkategorien nur T-Shirt und Schuhe ab — für Hose, Kleid, Rock, Pullover, Jacke,
 Unterwäsche und Socken gibt es dort nichts. Nebeneffekt: die Farbigkeit der Emoji hilft
 beim Wiedererkennen und setzt sich klar von der einfarbigen Bedienung ab.
+
+## Outfits
+
+Ein Outfit ist eine benannte Liste von Verweisen auf Kleidungsstücke — mehr nicht.
+Insbesondere **kein gespeicherter Aufenthaltsort**: `moveItem` ist die einzige Stelle,
+die einem Stück einen Haushalt gibt, und eine Kopie im Outfit liefe still veraltet,
+sobald ein Teil umzieht. Der Ort wird aus dem aktuellen Bestand hergeleitet
+(`selectOutfitStatus`) und steht als Satz unter jeder Kachel: „Komplett bei Mama"
+oder „3 bei Mama · 1 bei Papa".
+
+**Die Darstellung ist eine Collage in Körperreihenfolge, keine Puppe mit
+freigestellten Teilen.** Zwei Gründe, beide handfest: die Vorschaubilder sind JPEG
+ohne Transparenz — übereinandergelegt ergäben sie überlappende Quadrate statt einer
+Figur. Und Freistellen im Browser bräuchte ein Modell von mehreren Megabyte, das bei
+Fotos auf Bett oder Boden trotzdem ausgefranste Kanten liefert. Stattdessen bleiben
+die Fotos, wie sie sind, und stehen in der Reihenfolge, in der man sie anzieht. Die
+Silhouette dahinter ist reines CSS.
+
+Welche Zeile ein Stück bekommt, sagt seine Kategorie über ihren **Trageort**
+(`slot`: Kopf, Oberteil, Einteiler, Unterteil, Füße, Sonstiges). Die Sortierung aus
+den Einstellungen taugt dafür nicht — sie ist die Reihenfolge der Liste, nicht die
+des Körpers.
+
+Das Feld ist **optional**, und die Migration schreibt keine Kategorien um.
+`slotFor` entscheidet stattdessen beim Lesen in drei Stufen: die Angabe des Nutzers,
+sonst der Name der Startkategorien, sonst „Sonstiges". Ein Pflichtfeld müsste alle
+Zeilen in der Upgrade-Transaktion nachtragen; schlägt das fehl, bricht das Upgrade ab
+und die App öffnet gar nicht mehr.
+
+### Was die Datenbank-Migration gelehrt hat
+
+Die Upgrade-Funktion kehrte bei `oldVersion >= 1` zurück, **bevor** sie den Rest
+erreichte. Beim Sprung auf Version 3 wäre der neue Store deshalb nie entstanden —
+jeder Outfit-Zugriff hätte mit `NotFoundError` geendet, und aufgefallen wäre es erst
+auf dem Gerät: ein frisch angelegter Teststand nimmt den anderen Weg.
+
+Jetzt läuft jeder Schritt genau einmal (`if (schritt(n))`), und jeder Startpunkt
+kommt am Ende auf demselben Stand an. `src/entities/migration.test.ts` hält das fest;
+gegengeprüft, dass er mit der alten Fassung umfällt.
 
 ## Bilder und Geschwindigkeit
 
@@ -159,25 +202,29 @@ Original auf **1600 px** lange Kante, Vorschau auf **400 px**, beide JPEG bei
 Qualität 0.8. Die Bahnen laden ausschließlich die Vorschau; das Original wird nur
 in der Detailansicht geholt.
 
-Gemessen mit `e2e/performance.spec.ts` (WebKit auf einem Mac — ein iPhone 12 braucht
-länger):
+Gemessen mit `e2e/performance.spec.ts` bei 200 Stücken (Chromium auf einem Mac — ein
+iPhone 12 braucht länger):
 
-| | 200 Stücke | 500 Stücke |
-| --- | --- | --- |
-| Belegter Speicher | 28 MB | 70 MB |
-| Laden bis alle Karten da | ~450 ms | ~520 ms |
-| Reaktion auf Antippen | ~110 ms | ~150 ms |
-| Geladene Bilder | 21 | 21 |
+| | Wert |
+| --- | --- |
+| Belegter Speicher | 12,9 MB |
+| Laden bis alle Karten da | ~680 ms |
+| Reaktion auf Antippen | ~78 ms |
+| Geladene Bilder | 72 von 200 |
 
-Die Zahlen stammen von synthetischen Bildern, die sich besser komprimieren als echte
-Fotos — bei echten iPhone-Aufnahmen ist eher mit 250–400 KB je Original zu rechnen,
-also rund 70 MB für 200 Stücke.
+Die Zahlen stammen von synthetischen Bildern (16 KB Vorschau, 57 KB Original), die
+sich besser komprimieren als echte Fotos — bei echten iPhone-Aufnahmen ist eher mit
+250–400 KB je Original zu rechnen, also rund 70 MB für 200 Stücke.
 
 **Der entscheidende Punkt ist die letzte Zeile.** Ohne `loading="lazy"` an der Karte
 lud und dekodierte der Browser *alle* Bilder, auch die weit außerhalb der Bahn — bei
 jedem 400er-JPEG rund 640 KB dekodiert, also über 100 MB für Unsichtbares. Die
 Ladezeit war dabei identisch: das Aufschieben kostet nichts und spart alles. Ein Test
 sichert das ab, damit es nicht unbemerkt zurückfällt.
+
+Wie viele Bilder der Browser vorsorglich lädt, hängt von seiner eigenen Vorausschau
+ab und schwankt mit Fenstergröße und Version — der Test prüft deshalb eine Schranke
+(weniger als die Hälfte) und keine feste Zahl.
 
 ## Wichtig: Datenhaltbarkeit
 
