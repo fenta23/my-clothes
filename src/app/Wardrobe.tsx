@@ -17,7 +17,7 @@ import { useCategoryFilter } from '../features/filter/useCategoryFilter.ts'
 import { ClothingCardOverlay } from '../features/wardrobe/ClothingCard.tsx'
 import { Lane, refFromDropId } from '../features/wardrobe/Lane.tsx'
 import type { Id } from '../shared/db/ids.ts'
-import { SettingsSheet } from './SettingsSheet.tsx'
+import { MainMenu } from './MainMenu.tsx'
 import { useWardrobe, useWardrobeStore } from '../store/StoreProvider.tsx'
 import {
   selectCategories,
@@ -48,7 +48,7 @@ export function Wardrobe() {
   const [activeId, setActiveId] = useState<Id | null>(null)
   const [openItemId, setOpenItemId] = useState<Id | null>(null)
   const [adding, setAdding] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const filter = useCategoryFilter(items)
 
@@ -113,11 +113,11 @@ export function Wardrobe() {
         <button
           type="button"
           className={`glass glass--pill ${styles.iconButton}`}
-          aria-label="Einstellungen"
-          data-testid="settings-button"
-          onClick={() => setSettingsOpen(true)}
+          aria-label="Menü"
+          data-testid="menue-button"
+          onClick={() => setMenuOpen(true)}
         >
-          <span aria-hidden="true">⚙︎</span>
+          <span aria-hidden="true">☰</span>
         </button>
       </div>
 
@@ -183,7 +183,7 @@ export function Wardrobe() {
       </button>
 
       {adding && <AddClothingSheet onClose={() => setAdding(false)} />}
-      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {menuOpen && <MainMenu onClose={() => setMenuOpen(false)} />}
       {openItem && <ItemDetailSheet item={openItem} onClose={() => setOpenItemId(null)} />}
     </div>
   )

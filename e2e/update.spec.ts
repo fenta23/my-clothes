@@ -137,6 +137,30 @@ test('uebernimmt die neue Fassung auf Zuruf', async ({ page }) => {
   await expect(page.getByTestId('update-banner')).toBeHidden()
 })
 
+/*
+ * Diese Faelle waren die eigentliche Luecke: die Tests oben rufen `update()` selbst
+ * auf und pruefen damit nur, dass ein erkanntes Update ein Banner zeigt. Ob die App
+ * die Pruefung von SELBST ausloest, stand nie unter Test - und genau das fehlte auf
+ * dem iPhone: die Meldung kam nur nach einem vollstaendigen Neustart der App, nicht
+ * aus dem Hintergrund.
+ */
+for (const [name, fire] of [
+  ['pageshow', () => window.dispatchEvent(new Event('pageshow'))],
+  ['focus', () => window.dispatchEvent(new Event('focus'))],
+  ['visibilitychange', () => document.dispatchEvent(new Event('visibilitychange'))],
+  ['pointerdown', () => document.dispatchEvent(new Event('pointerdown'))],
+] as const) {
+  test(`erkennt eine neue Version selbst bei ${name}`, async ({ page }) => {
+    deployMarker = 'version-2'
+
+    // Kein manuelles update() - nur das Signal, das ein Geraet beim Zurueckkehren
+    // schicken wuerde.
+    await page.evaluate(fire)
+
+    await expect(page.getByTestId('update-banner')).toBeVisible({ timeout: 15_000 })
+  })
+}
+
 test('laesst sich ausblenden, ohne neu zu laden', async ({ page }) => {
   deployMarker = 'version-2'
   await checkForUpdate(page)

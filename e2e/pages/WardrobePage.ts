@@ -32,9 +32,21 @@ export class WardrobePage {
     this.settings = new SettingsSheetPage(page)
   }
 
-  /** Oeffnet die Einstellungen. */
+  /** Oeffnet die Seitenleiste. */
+  async openMenu(): Promise<void> {
+    await this.page.getByTestId('menue-button').click()
+    await expect(this.page.getByTestId('hauptmenue')).toBeVisible()
+  }
+
+  /** Waehlt einen Eintrag der Seitenleiste. */
+  async openMenuEntry(view: 'einstellungen' | 'datenschutz' | 'impressum'): Promise<void> {
+    await this.openMenu()
+    await this.page.locator(`[data-testid="menue-eintrag"][data-view="${view}"]`).click()
+  }
+
+  /** Oeffnet die Einstellungen - jetzt ueber die Seitenleiste. */
   async openSettings(): Promise<SettingsSheetPage> {
-    await this.page.getByTestId('settings-button').click()
+    await this.openMenuEntry('einstellungen')
     await expect(this.settings.root).toBeVisible()
 
     return this.settings
