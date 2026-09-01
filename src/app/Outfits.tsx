@@ -41,14 +41,20 @@ export function Outfits() {
         onOpen={(outfit) => setOpenId(outfit.id)}
       />
 
-      <button
-        type="button"
-        className={screen.addButton}
-        onClick={() => setEditing('neu')}
-        data-testid="outfit-anlegen"
-      >
-        <IconAdd className="icon" aria-hidden="true" /> Outfit
-      </button>
+      {/*
+        Nur sichtbar, solange kein Blatt offen ist: das Glas der Blaetter ist
+        durchscheinend, und der kraeftige Knopf blitzte sonst durch die Bedienung.
+      */}
+      {!openOutfit && editing === null && (
+        <button
+          type="button"
+          className={screen.addButton}
+          onClick={() => setEditing('neu')}
+          data-testid="outfit-anlegen"
+        >
+          <IconAdd className="icon" aria-hidden="true" /> Outfit
+        </button>
+      )}
 
       {editing === 'neu' && <OutfitEditorSheet onClose={() => setEditing(null)} />}
 

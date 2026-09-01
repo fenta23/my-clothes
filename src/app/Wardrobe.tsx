@@ -136,14 +136,17 @@ export function Wardrobe() {
         </DragOverlay>
       </DndContext>
 
-      <button
-        type="button"
-        className={screen.addButton}
-        onClick={() => setAdding(true)}
-        data-testid="add-button"
-      >
-        <IconAdd className="icon" aria-hidden="true" /> Kleidung
-      </button>
+      {/* Siehe Outfits: das Glas der Blaetter ist durchscheinend, der Knopf blitzte durch. */}
+      {!adding && !openItem && (
+        <button
+          type="button"
+          className={screen.addButton}
+          onClick={() => setAdding(true)}
+          data-testid="add-button"
+        >
+          <IconAdd className="icon" aria-hidden="true" /> Kleidung
+        </button>
+      )}
 
       {adding && <AddClothingSheet onClose={() => setAdding(false)} />}
       {openItem && <ItemDetailSheet item={openItem} onClose={() => setOpenItemId(null)} />}

@@ -17,7 +17,8 @@ import { OutfitFigure } from './OutfitFigure.tsx'
 import { outfitStatusText } from './outfitStatusText.ts'
 import styles from './OutfitSheet.module.css'
 
-const FIGURE_SIZE_PX = 92
+/* Klein genug, dass ein Outfit aus fuenf Teilen noch ohne Scrollen ins Blatt passt. */
+const FIGURE_SIZE_PX = 72
 
 /** Ein Outfit in gross: die Figur, der Aufenthaltsort seiner Teile und die Bedienung. */
 export function OutfitSheet({
