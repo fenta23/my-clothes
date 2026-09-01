@@ -163,10 +163,7 @@ export function ItemDetailSheet({
         </div>
       </div>
 
-      <div className={controls.field}>
-        <span className={controls.label}>Verlauf</span>
-        <ItemTimeline events={events} />
-      </div>
+      <ItemTimeline events={events} />
 
       {confirmDelete ? (
         <div className={controls.confirm} data-testid="loesch-bestaetigung">

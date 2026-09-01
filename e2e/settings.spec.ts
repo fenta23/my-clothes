@@ -47,6 +47,7 @@ test.describe('Haushalte', () => {
     await settings.close()
 
     const detail = await wardrobe.openItem('Lieblingshose')
+    await detail.openHistory()
     await expect(detail.historyEntries()).toHaveCount(2)
 
     // Der Verlauf erzaehlt, wie es damals hiess - nicht, wie es heute heisst.

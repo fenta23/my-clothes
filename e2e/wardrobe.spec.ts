@@ -150,6 +150,7 @@ test('protokolliert Zugang und Wechsel mit Zeitpunkt', async () => {
   await wardrobe.bottom.expectCount(1)
 
   const detail = await wardrobe.openItem('Lieblingshose')
+  await detail.openHistory()
 
   // Erst auf die Anzahl warten: allTextContents() wartet von sich aus auf nichts
   // und laeuft sonst in eine Wettlaufsituation mit dem Nachladen des Verlaufs.
@@ -158,6 +159,34 @@ test('protokolliert Zugang und Wechsel mit Zeitpunkt', async () => {
   // Neueste Aenderung zuerst.
   expect(await detail.historyTexts()).toEqual(['Neu → Haushalt 2', 'Neu hinzugefügt'])
   await expect(detail.root.getByTestId('verlauf-zeit').first()).toContainText('2026')
+})
+
+test('haelt den Verlauf eingeklappt und nennt die Anzahl', async () => {
+  await wardrobe.addItem('Lieblingshose')
+  await wardrobe.dragCardToLane('Lieblingshose', wardrobe.top)
+  await wardrobe.top.expectCount(1)
+
+  const detail = await wardrobe.openItem('Lieblingshose')
+
+  // Nebeninformation: sie soll die Ansicht nicht fuellen und das Loeschen nicht
+  // aus dem Blick schieben.
+  await expect(detail.root.getByTestId('verlauf')).toBeHidden()
+  // Die Anzahl steht aussen, damit man vor dem Aufklappen weiss, ob es sich lohnt.
+  await expect(detail.historyToggle).toContainText('2 Einträge')
+})
+
+test('klappt den Verlauf auf und wieder zu', async () => {
+  await wardrobe.addItem('Lieblingshose')
+
+  const detail = await wardrobe.openItem('Lieblingshose')
+  await expect(detail.historyToggle).toContainText('1 Eintrag')
+
+  await detail.historyToggle.click()
+  await expect(detail.root.getByTestId('verlauf')).toBeVisible()
+  await expect(detail.historyEntries()).toHaveCount(1)
+
+  await detail.historyToggle.click()
+  await expect(detail.root.getByTestId('verlauf')).toBeHidden()
 })
 
 test('wechselt den Haushalt auch ohne Geste ueber die Detailansicht', async () => {
