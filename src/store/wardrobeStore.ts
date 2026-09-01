@@ -59,7 +59,7 @@ export interface WardrobeStore extends Store<WardrobeState> {
   addCategory: (input: { name: string; emoji: string; colorHex: string }) => Promise<void>
   updateCategory: (
     id: Id,
-    patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder'>>,
+    patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder' | 'slot'>>,
   ) => Promise<void>
   deleteCategory: (id: Id) => Promise<number>
   moveCategory: (id: Id, direction: 'up' | 'down') => Promise<void>
