@@ -17,7 +17,7 @@ import { useCategoryFilter } from '../features/filter/useCategoryFilter.ts'
 import { ClothingCardOverlay } from '../features/wardrobe/ClothingCard.tsx'
 import { Lane, refFromDropId } from '../features/wardrobe/Lane.tsx'
 import type { Id } from '../shared/db/ids.ts'
-import { MainMenu } from './MainMenu.tsx'
+import { shallowArrayEqual } from '../shared/store/useStore.ts'
 import { useWardrobe, useWardrobeStore } from '../store/StoreProvider.tsx'
 import {
   selectCategories,
@@ -25,22 +25,22 @@ import {
   selectItemById,
   selectItems,
   selectItemsIn,
-  selectStatus,
 } from '../store/selectors.ts'
-import { IconAdd, IconMenu } from '../shared/ui/icons.ts'
+import { IconAdd } from '../shared/ui/icons.ts'
+import screen from './screen.module.css'
 import styles from './Wardrobe.module.css'
 
 /**
- * Der Hauptbildschirm: drei Bahnen uebereinander.
+ * Der Schrank: drei Bahnen uebereinander.
  *
  * Oben und unten je ein Haushalt, dazwischen alles, was noch nicht zugeordnet ist.
  * Verschoben wird durch senkrechtes Ziehen - waagerecht bleibt dem Scrollen der Bahn
  * vorbehalten, dafuer sorgt `touch-action: pan-x` auf den Karten.
  *
- * Setzt die Features zusammen und kennt als einziger Ort alle davon.
+ * Setzt die Features zusammen und kennt als einziger Ort alle davon. Kopfzeile,
+ * Menue und der Zustand des Ladens liegen in `Shell`.
  */
 export function Wardrobe() {
-  const status = useWardrobe(selectStatus)
   const households = useWardrobe(selectHouseholds)
   const categories = useWardrobe(selectCategories)
   const items = useWardrobe(selectItems)
@@ -49,7 +49,6 @@ export function Wardrobe() {
   const [activeId, setActiveId] = useState<Id | null>(null)
   const [openItemId, setOpenItemId] = useState<Id | null>(null)
   const [adding, setAdding] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   const filter = useCategoryFilter(items)
 
@@ -70,6 +69,7 @@ export function Wardrobe() {
   const activeItem = useWardrobe(useMemo(() => selectItemById(activeId), [activeId]))
 
   const [top, bottom] = households
+  if (!top || !bottom) return null
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(String(event.active.id))
@@ -82,46 +82,8 @@ export function Wardrobe() {
     void store.moveItem(String(event.active.id), refFromDropId(String(event.over.id)))
   }
 
-  if (status === 'fehler') {
-    return (
-      <div className={styles.screen}>
-        <div className="appBackdrop" aria-hidden="true" />
-        <p className={styles.error} data-testid="db-fehler">
-          Die Datenbank konnte nicht geöffnet werden. Läuft die App im privaten Modus?
-        </p>
-      </div>
-    )
-  }
-
-  if (status !== 'bereit' || !top || !bottom) {
-    return (
-      <div className={styles.screen}>
-        <div className="appBackdrop" aria-hidden="true" />
-        <p className={styles.loading} data-testid="laedt">
-          Kleiderschrank wird geöffnet…
-        </p>
-      </div>
-    )
-  }
-
   return (
-    <div className={styles.screen} data-testid="wardrobe">
-      <div className="appBackdrop" aria-hidden="true" />
-
-      <div className={styles.topBar}>
-        <span className={styles.brand}>Kleiderschrank</span>
-
-        <button
-          type="button"
-          className={`glass glass--pill ${styles.iconButton}`}
-          aria-label="Menü"
-          data-testid="menue-button"
-          onClick={() => setMenuOpen(true)}
-        >
-          <IconMenu className="icon" aria-hidden="true" />
-        </button>
-      </div>
-
+    <div className={screen.content} data-testid="wardrobe">
       <CategoryFilter
         categories={categories}
         selected={filter.selected}
@@ -174,17 +136,19 @@ export function Wardrobe() {
         </DragOverlay>
       </DndContext>
 
-      <button
-        type="button"
-        className={styles.addButton}
-        onClick={() => setAdding(true)}
-        data-testid="add-button"
-      >
-        <IconAdd className="icon" aria-hidden="true" /> Kleidung
-      </button>
+      {/* Siehe Outfits: das Glas der Blaetter ist durchscheinend, der Knopf blitzte durch. */}
+      {!adding && !openItem && (
+        <button
+          type="button"
+          className={screen.addButton}
+          onClick={() => setAdding(true)}
+          data-testid="add-button"
+        >
+          <IconAdd className="icon" aria-hidden="true" /> Kleidung
+        </button>
+      )}
 
       {adding && <AddClothingSheet onClose={() => setAdding(false)} />}
-      {menuOpen && <MainMenu onClose={() => setMenuOpen(false)} />}
       {openItem && <ItemDetailSheet item={openItem} onClose={() => setOpenItemId(null)} />}
     </div>
   )
@@ -215,7 +179,7 @@ function LaneSlot({
 }) {
   const items = useWardrobe(
     useMemo(() => selectItemsIn(householdId), [householdId]),
-    arraysEqual,
+    shallowArrayEqual,
   )
 
   return (
@@ -230,8 +194,4 @@ function LaneSlot({
       onOpenItem={(item) => onOpenItem(item.id)}
     />
   )
-}
-
-function arraysEqual<T>(a: readonly T[], b: readonly T[]): boolean {
-  return a.length === b.length && a.every((value, index) => Object.is(value, b[index]))
 }

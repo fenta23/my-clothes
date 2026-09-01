@@ -3,12 +3,18 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import { StoreProvider, useWardrobe, useWardrobeStore } from './StoreProvider.tsx'
-import { selectCategories, selectHouseholds, selectItems, selectStatus } from './selectors.ts'
+import {
+  selectCategories,
+  selectHouseholds,
+  selectItems,
+  selectOutfits,
+  selectStatus,
+} from './selectors.ts'
 
 let counter = 0
 
 /** Zaehlt, wie oft eine Komponente gerendert wurde. */
-const renders = { categories: 0, items: 0 }
+const renders = { categories: 0, items: 0, outfits: 0 }
 
 function CategoriesProbe() {
   const categories = useWardrobe(selectCategories)
@@ -22,6 +28,13 @@ function ItemsProbe() {
   renders.items += 1
 
   return <p data-testid="stuecke">{items.length}</p>
+}
+
+function OutfitsProbe() {
+  const outfits = useWardrobe(selectOutfits)
+  renders.outfits += 1
+
+  return <p data-testid="outfits">{outfits.map((o) => o.name).join(', ')}</p>
 }
 
 function Actions() {
@@ -77,6 +90,15 @@ function Actions() {
       >
         umbenennen
       </button>
+
+      <button
+        onClick={() => {
+          const first = items[0]
+          void store.addOutfit({ name: 'Schultag', itemIds: first ? [first.id] : [] })
+        }}
+      >
+        outfit anlegen
+      </button>
     </div>
   )
 }
@@ -91,12 +113,14 @@ function renderApp() {
   counter += 1
   renders.categories = 0
   renders.items = 0
+  renders.outfits = 0
 
   render(
     <StoreProvider dbName={`store-test-${counter}`}>
       <Ready>
         <CategoriesProbe />
         <ItemsProbe />
+        <OutfitsProbe />
         <Actions />
       </Ready>
     </StoreProvider>,
@@ -147,6 +171,39 @@ describe('Kleiderschrank-Store', () => {
      */
     expect(renders.items).toBeGreaterThan(itemsBefore)
     expect(renders.categories).toBe(categoriesBefore)
+  })
+
+  it('rendert bei einem neuen Foto NICHT die Outfit-Liste neu', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findByTestId('outfits')
+
+    const outfitsBefore = renders.outfits
+
+    await user.click(screen.getByRole('button', { name: 'hinzufügen' }))
+    await waitFor(() => expect(screen.getByTestId('stuecke')).toHaveTextContent('1'))
+
+    // Dieselbe Zusicherung wie bei den Kategorien - der zweite Bildschirm darf die
+    // Trennung nicht wieder aufweichen.
+    expect(renders.outfits).toBe(outfitsBefore)
+  })
+
+  it('nimmt ein Outfit auf und entfernt ein geloeschtes Stueck daraus', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findByTestId('stuecke')
+
+    await user.click(screen.getByRole('button', { name: 'hinzufügen' }))
+    await waitFor(() => expect(screen.getByTestId('stuecke')).toHaveTextContent('1'))
+
+    await user.click(screen.getByRole('button', { name: 'outfit anlegen' }))
+    await waitFor(() => expect(screen.getByTestId('outfits')).toHaveTextContent('Schultag'))
+
+    await user.click(screen.getByRole('button', { name: 'löschen' }))
+
+    // Das Outfit bleibt, sein Verweis auf das geloeschte Stueck nicht.
+    await waitFor(() => expect(screen.getByTestId('stuecke')).toHaveTextContent('0'))
+    expect(screen.getByTestId('outfits')).toHaveTextContent('Schultag')
   })
 
   it('aktualisiert die Anzeige nach einem Wechsel der Bahn', async () => {

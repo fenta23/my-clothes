@@ -8,6 +8,8 @@ import * as eventRepo from '../entities/event/repository.ts'
 import type { ItemEvent } from '../entities/event/types.ts'
 import * as householdRepo from '../entities/household/repository.ts'
 import type { Household, HouseholdRef } from '../entities/household/types.ts'
+import * as outfitRepo from '../entities/outfit/repository.ts'
+import type { Outfit } from '../entities/outfit/types.ts'
 import { seedIfEmpty } from '../entities/seed.ts'
 import type { Id } from '../shared/db/ids.ts'
 import { createStore, type Store } from '../shared/store/createStore.ts'
@@ -33,6 +35,7 @@ export interface WardrobeState {
   households: Household[]
   categories: Category[]
   items: ClothingItem[]
+  outfits: Outfit[]
 }
 
 const EMPTY: WardrobeState = {
@@ -41,6 +44,7 @@ const EMPTY: WardrobeState = {
   households: [],
   categories: [],
   items: [],
+  outfits: [],
 }
 
 export interface WardrobeStore extends Store<WardrobeState> {
@@ -59,10 +63,16 @@ export interface WardrobeStore extends Store<WardrobeState> {
   addCategory: (input: { name: string; emoji: string; colorHex: string }) => Promise<void>
   updateCategory: (
     id: Id,
-    patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder'>>,
+    patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder' | 'slot'>>,
   ) => Promise<void>
   deleteCategory: (id: Id) => Promise<number>
   moveCategory: (id: Id, direction: 'up' | 'down') => Promise<void>
+
+  // Outfits
+  addOutfit: (input: { name: string; itemIds: Id[] }) => Promise<Outfit>
+  renameOutfit: (id: Id, name: string) => Promise<void>
+  setOutfitItems: (id: Id, itemIds: Id[]) => Promise<void>
+  deleteOutfit: (id: Id) => Promise<void>
 
   // Haushalte
   renameHousehold: (id: Id, name: string) => Promise<void>
@@ -93,6 +103,11 @@ export function createWardrobeStore(): WardrobeStore {
     store.setState((s) => ({ ...s, categories }))
   }
 
+  const refreshOutfits = async () => {
+    const outfits = await outfitRepo.listOutfits(requireDb())
+    store.setState((s) => ({ ...s, outfits }))
+  }
+
   const refreshHouseholds = async () => {
     const households = await householdRepo.listHouseholds(requireDb())
     store.setState((s) => ({ ...s, households }))
@@ -100,13 +115,14 @@ export function createWardrobeStore(): WardrobeStore {
 
   const reloadAll = async () => {
     const handle = requireDb()
-    const [households, categories, items] = await Promise.all([
+    const [households, categories, items, outfits] = await Promise.all([
       householdRepo.listHouseholds(handle),
       categoryRepo.listCategories(handle),
       clothingRepo.listItems(handle),
+      outfitRepo.listOutfits(handle),
     ])
 
-    store.setState((s) => ({ ...s, households, categories, items }))
+    store.setState((s) => ({ ...s, households, categories, items, outfits }))
   }
 
   return {
@@ -150,7 +166,10 @@ export function createWardrobeStore(): WardrobeStore {
 
     deleteItem: async (itemId) => {
       await clothingRepo.deleteItem(requireDb(), itemId)
+
       await refreshItems()
+      // Das Stueck ist auch aus jedem Outfit geflogen - die Anzeige muss das sehen.
+      await refreshOutfits()
     },
 
     loadImages: (itemId) => clothingRepo.getImages(requireDb(), itemId),
@@ -179,6 +198,28 @@ export function createWardrobeStore(): WardrobeStore {
     moveCategory: async (id, direction) => {
       await categoryRepo.moveCategory(requireDb(), id, direction)
       await refreshCategories()
+    },
+
+    addOutfit: async (input) => {
+      const outfit = await outfitRepo.createOutfit(requireDb(), input)
+      await refreshOutfits()
+
+      return outfit
+    },
+
+    renameOutfit: async (id, name) => {
+      await outfitRepo.renameOutfit(requireDb(), id, name)
+      await refreshOutfits()
+    },
+
+    setOutfitItems: async (id, itemIds) => {
+      await outfitRepo.setOutfitItems(requireDb(), id, itemIds)
+      await refreshOutfits()
+    },
+
+    deleteOutfit: async (id) => {
+      await outfitRepo.deleteOutfit(requireDb(), id)
+      await refreshOutfits()
     },
 
     renameHousehold: async (id, name) => {

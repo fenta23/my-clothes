@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { AddClothingSheetPage } from './AddClothingSheetPage.ts'
 import { ItemDetailSheetPage } from './ItemDetailSheetPage.ts'
 import { LanePage } from './LanePage.ts'
+import { OutfitsPage } from './OutfitsPage.ts'
 import { SettingsSheetPage } from './SettingsSheetPage.ts'
 import { pointerDrag, type PointerType } from './gestures.ts'
 
@@ -22,6 +23,7 @@ export class WardrobePage {
   readonly addSheet: AddClothingSheetPage
   readonly detailSheet: ItemDetailSheetPage
   readonly settings: SettingsSheetPage
+  readonly outfits: OutfitsPage
 
   constructor(private readonly page: Page) {
     this.top = new LanePage(page, 'lane-top')
@@ -30,6 +32,21 @@ export class WardrobePage {
     this.addSheet = new AddClothingSheetPage(page)
     this.detailSheet = new ItemDetailSheetPage(page)
     this.settings = new SettingsSheetPage(page)
+    this.outfits = new OutfitsPage(page)
+  }
+
+  /** Wechselt auf den Outfit-Bildschirm. */
+  async showOutfits(): Promise<OutfitsPage> {
+    await this.page.getByTestId('ansicht-outfits').click()
+    await expect(this.outfits.root).toBeVisible()
+
+    return this.outfits
+  }
+
+  /** Zurueck auf den Schrank. */
+  async showWardrobe(): Promise<void> {
+    await this.page.getByTestId('ansicht-schrank').click()
+    await expect(this.page.getByTestId('wardrobe')).toBeVisible()
   }
 
   /** Oeffnet die Seitenleiste. */

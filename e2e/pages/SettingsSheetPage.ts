@@ -23,6 +23,16 @@ export class SettingsSheetPage {
 
   // --- Kategorien -----------------------------------------------------
 
+  /** Der Trageort einer Kategorie - er bestimmt die Zeile in der Outfit-Figur. */
+  categorySlot(name: string): Locator {
+    return this.categoryRow(name).getByTestId('kategorie-trageort')
+  }
+
+  async setCategorySlot(name: string, slot: string): Promise<void> {
+    await this.categorySlot(name).selectOption(slot)
+    await expect(this.categorySlot(name)).toHaveAttribute('data-slot', slot)
+  }
+
   categoryRow(name: string): Locator {
     return this.root.locator(`[data-testid="kategorie-zeile"][data-category="${name}"]`)
   }

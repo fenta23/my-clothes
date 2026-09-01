@@ -1,0 +1,118 @@
+/*
+ * Die gemeinsame Geometrie beider Bildschirme.
+ *
+ * Bewusst an einer Stelle statt je Bildschirm: diese Regeln tragen die Scroll-Sperre,
+ * die auf dem iPhone 12 muehsam erkaempft wurde. Nachgebaut faellt sie irgendwann
+ * auf genau einem der beiden Bildschirme wieder auf.
+ */
+
+.screen {
+  /*
+   * `100%` statt `100dvh`: html, body und #root arbeiten bereits mit Prozent.
+   * Zwei Hoehensysteme nebeneinander weichen auf iOS im Subpixelbereich
+   * voneinander ab - und schon das machte das Dokument scrollbar.
+   */
+  height: 100%;
+
+  /* Bezugspunkt fuer den absolut gesetzten Hinzufuegen-Knopf. Ohne das bezieht
+     er sich auf den Ursprungs-Block der Seite und kann sie verlaengern. */
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+
+  padding:
+    calc(var(--safe-top) + var(--sp-2))
+    calc(var(--safe-right) + var(--sp-3))
+    calc(var(--safe-bottom) + var(--sp-2))
+    calc(var(--safe-left) + var(--sp-3));
+}
+
+.topBar {
+  /*
+   * Die Kopfzeile ist kein Scroller und soll auch keine Geste ausloesen - sie
+   * war der bequemste Griff, um die ganze Seite zu verschieben.
+   *
+   * Bewusst nur hier und nicht auf `.screen`: touch-action wirkt auf alle
+   * Nachfahren, ein `none` weiter oben wuerde das waagerechte Scrollen der
+   * Bahnen abschalten.
+   */
+  touch-action: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-1);
+}
+
+/* Der Umschalter steht, wo frueher der Schriftzug stand - der Name der App steht
+   ohnehin unter dem Symbol auf dem Home-Bildschirm. */
+.switcher {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+}
+
+.switch {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.switchActive {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.iconButton {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+}
+
+/* Der Inhalt zwischen Kopfzeile und unterem Knopf. */
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.addButton {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + var(--sp-4));
+  transform: translateX(-50%);
+
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 28px rgba(37, 20, 78, 0.34);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.loading {
+  margin: auto;
+  color: var(--text-secondary);
+}
+
+.error {
+  margin: auto;
+  max-width: 34ch;
+  text-align: center;
+  color: var(--danger);
+}

@@ -2,7 +2,7 @@ import { UpdateBanner } from '../features/app-update/UpdateBanner.tsx'
 import { useAppUpdate } from '../features/app-update/useAppUpdate.ts'
 import { requestPersistentStorage } from '../shared/lib/platform.ts'
 import { StoreProvider } from '../store/StoreProvider.tsx'
-import { Wardrobe } from './Wardrobe.tsx'
+import { Shell } from './Shell.tsx'
 
 /*
  * Der Speicher wird einmal beim Start als dauerhaft angefordert. Safari gewaehrt das
@@ -18,7 +18,7 @@ export function App() {
 
   return (
     <StoreProvider>
-      <Wardrobe />
+      <Shell />
 
       {update.needRefresh && (
         <UpdateBanner onReload={update.reload} onDismiss={update.dismiss} />

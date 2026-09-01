@@ -3,6 +3,7 @@ import type { Db } from '../db.ts'
 import { eventIdsForItem, newEvent } from '../event/repository.ts'
 import { laneName } from '../household/repository.ts'
 import type { HouseholdRef } from '../household/types.ts'
+import { listOutfits } from '../outfit/repository.ts'
 import type { ClothingItem, ItemImages } from './types.ts'
 
 /*
@@ -174,16 +175,38 @@ export async function renameItem(
   return updated
 }
 
-/** Loescht ein Kleidungsstueck samt Bildern und Verlauf. */
-export async function deleteItem(db: Db, itemId: Id): Promise<void> {
+/**
+ * Loescht ein Kleidungsstueck samt Bildern, Verlauf und Outfit-Mitgliedschaft.
+ *
+ * Der Griff in den Outfit-Store gehoert hierher, nach dem Vorbild von
+ * `deleteCategory`: ein Outfit darf nicht auf ein Stueck zeigen, das es nicht mehr
+ * gibt. Beim Lesen zu filtern wuerde den Fehler verstecken statt ihn zu vermeiden.
+ *
+ * Alles in EINER Transaktion - ein zweiter Durchgang waere nicht atomar, und
+ * braeche er ab, bliebe der Verweis stehen.
+ */
+export async function deleteItem(db: Db, itemId: Id, at = Date.now()): Promise<void> {
+  /*
+   * Beides VOR der Transaktion lesen. Ein `await` auf etwas, das nicht selbst eine
+   * IndexedDB-Anfrage ist, beendet die Transaktion in Safari mitten im Lauf - und
+   * das faellt erst auf dem iPhone auf, lange nachdem die CI gruen war.
+   */
   const eventIds = await eventIdsForItem(db, itemId)
+  const betroffen = (await listOutfits(db)).filter((o) => o.itemIds.includes(itemId))
 
-  const tx = db.transaction(['items', 'images', 'events'], 'readwrite')
+  const tx = db.transaction(['items', 'images', 'events', 'outfits'], 'readwrite')
 
   await Promise.all([
     tx.objectStore('items').delete(itemId),
     tx.objectStore('images').delete(itemId),
     ...eventIds.map((id) => tx.objectStore('events').delete(id)),
+    ...betroffen.map((outfit) =>
+      tx.objectStore('outfits').put({
+        ...outfit,
+        itemIds: outfit.itemIds.filter((id) => id !== itemId),
+        updatedAt: at,
+      }),
+    ),
     tx.done,
   ])
 }

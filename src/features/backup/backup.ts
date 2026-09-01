@@ -6,6 +6,8 @@ import { listItems } from '../../entities/clothing/repository.ts'
 import type { ClothingItem } from '../../entities/clothing/types.ts'
 import type { Db } from '../../entities/db.ts'
 import { listAllEvents } from '../../entities/event/repository.ts'
+import { listOutfits } from '../../entities/outfit/repository.ts'
+import type { Outfit } from '../../entities/outfit/types.ts'
 import type { ItemEvent } from '../../entities/event/types.ts'
 import { listHouseholds } from '../../entities/household/repository.ts'
 import type { Household } from '../../entities/household/types.ts'
@@ -36,6 +38,12 @@ export interface BackupData {
   categories: Category[]
   items: ClothingItem[]
   events: ItemEvent[]
+  /*
+   * Spaeter dazugekommen und deshalb bewusst nachgiebig gelesen (`?? []`): das
+   * Format bleibt bei 1. Ein Sprung auf 2 wuerde jede vorhandene Sicherung
+   * unlesbar machen, denn `readBackup` prueft auf strikte Gleichheit.
+   */
+  outfits?: Outfit[]
 }
 
 const DATA_ENTRY = 'daten.json'
@@ -51,11 +59,12 @@ function thumbName(id: string): string {
 
 /** Packt den gesamten Bestand in ein ZIP. */
 export async function exportBackup(db: Db, at = Date.now()): Promise<Blob> {
-  const [households, categories, items, events] = await Promise.all([
+  const [households, categories, items, events, outfits] = await Promise.all([
     listHouseholds(db),
     listCategories(db),
     listItems(db),
     listAllEvents(db),
+    listOutfits(db),
   ])
 
   const data: BackupData = {
@@ -65,6 +74,7 @@ export async function exportBackup(db: Db, at = Date.now()): Promise<Blob> {
     categories,
     items,
     events,
+    outfits,
   }
 
   const files: Record<string, Uint8Array> = {
@@ -147,7 +157,7 @@ export async function importBackup(
   const { data, images } = readBackup(archive)
 
   const tx = db.transaction(
-    ['households', 'categories', 'items', 'events', 'images'],
+    ['households', 'categories', 'items', 'events', 'images', 'outfits'],
     'readwrite',
   )
 
@@ -157,6 +167,7 @@ export async function importBackup(
     tx.objectStore('items').clear(),
     tx.objectStore('events').clear(),
     tx.objectStore('images').clear(),
+    tx.objectStore('outfits').clear(),
   ])
 
   await Promise.all([
@@ -164,6 +175,7 @@ export async function importBackup(
     ...data.categories.map((c) => tx.objectStore('categories').put(c)),
     ...data.items.map((i) => tx.objectStore('items').put(i)),
     ...(data.events ?? []).map((e) => tx.objectStore('events').put(e)),
+    ...(data.outfits ?? []).map((o) => tx.objectStore('outfits').put(o)),
     ...[...images].map(([id, { full, thumb }]) =>
       tx.objectStore('images').put({
         id,

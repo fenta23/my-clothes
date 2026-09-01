@@ -61,8 +61,30 @@
   background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2) var(--sp-2);
+}
+
+/*
+ * Der Trageort steht unter der Zeile, nicht in ihr: die Knopfzeile ist auf einem
+ * iPhone 12 schon voll, ein siebtes Bedienelement dort waere nicht mehr zu treffen.
+ */
+.slotSelect {
+  flex: 0 0 auto;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--glass-stroke);
+  background: var(--glass-fill);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
 .meta {
-  padding: 0 var(--sp-2) var(--sp-1);
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.72rem;
   color: var(--text-tertiary);
 }

@@ -1,6 +1,6 @@
 import { newId, type Id } from '../../shared/db/ids.ts'
 import type { Db } from '../db.ts'
-import type { Category } from './types.ts'
+import type { BodySlot, Category } from './types.ts'
 
 export async function listCategories(db: Db): Promise<Category[]> {
   return db.getAllFromIndex('categories', 'by-sortOrder')
@@ -8,7 +8,7 @@ export async function listCategories(db: Db): Promise<Category[]> {
 
 export async function createCategory(
   db: Db,
-  input: { name: string; emoji: string; colorHex: string },
+  input: { name: string; emoji: string; colorHex: string; slot?: BodySlot },
   at = Date.now(),
 ): Promise<Category> {
   const existing = await db.getAll('categories')
@@ -21,7 +21,7 @@ export async function createCategory(
 }
 
 export function newCategory(
-  input: { name: string; emoji: string; colorHex: string; sortOrder: number },
+  input: { name: string; emoji: string; colorHex: string; sortOrder: number; slot?: BodySlot },
   at: number,
 ): Category {
   return {
@@ -30,6 +30,7 @@ export function newCategory(
     emoji: input.emoji,
     colorHex: input.colorHex,
     sortOrder: input.sortOrder,
+    slot: input.slot,
     createdAt: at,
     updatedAt: at,
   }
@@ -39,7 +40,7 @@ export function newCategory(
 export async function updateCategory(
   db: Db,
   id: Id,
-  patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder'>>,
+  patch: Partial<Pick<Category, 'name' | 'emoji' | 'colorHex' | 'sortOrder' | 'slot'>>,
   at = Date.now(),
 ): Promise<Category | null> {
   const category = await db.get('categories', id)

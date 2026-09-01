@@ -127,3 +127,28 @@ test('laesst den Bestand nach einem Fehlversuch unveraendert', async () => {
   // Ein Fehlversuch darf nichts kosten.
   await wardrobe.inbox.expectCount(1)
 })
+
+test('stellt auch die Outfits wieder her', async () => {
+  await wardrobe.addItem('Lieblingshose', { category: 'Hose' })
+
+  const outfits = await wardrobe.showOutfits()
+  await outfits.create('Schultag', ['Lieblingshose'])
+
+  const settings = await wardrobe.openSettings()
+  const { path } = await settings.exportBackup()
+  await settings.close()
+
+  // Das Outfit loeschen, damit die Wiederherstellung etwas zu tun hat.
+  await wardrobe.showOutfits()
+  await outfits.open('Schultag')
+  await outfits.delete()
+  await expect(outfits.emptyHint).toBeVisible()
+
+  const settingsAgain = await wardrobe.openSettings()
+  await settingsAgain.importBackup(path)
+  await settingsAgain.close()
+
+  await wardrobe.showOutfits()
+  await expect(outfits.card('Schultag')).toBeVisible()
+  await expect(outfits.cardPieces('Schultag')).toHaveCount(1)
+})

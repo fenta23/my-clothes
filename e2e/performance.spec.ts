@@ -24,7 +24,9 @@ async function seedManyItems(page: Page, count: number): Promise<SeedReport> {
   return page.evaluate(async (count) => {
     const openDb = () =>
       new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open('kleiderschrank', 2)
+        // Ohne Versionsnummer: der Test soll die vorhandene Datenbank oeffnen und
+        // nicht bei jedem Schema-Schritt nachgezogen werden muessen.
+        const request = indexedDB.open('kleiderschrank')
         request.onsuccess = () => resolve(request.result)
         request.onerror = () => reject(request.error)
       })
@@ -126,6 +128,55 @@ async function seedManyItems(page: Page, count: number): Promise<SeedReport> {
   }, count)
 }
 
+const OUTFIT_COUNT = 40
+const ITEMS_PER_OUTFIT = 5
+
+/** Muss zu `PREVIEW_MAX_ITEMS` in `src/features/outfits/OutfitList.tsx` passen. */
+const PREVIEW_MAX_ITEMS = 3
+
+/**
+ * Legt Outfits auf den bereits geschriebenen Stuecken an.
+ *
+ * Die Uebersicht zeigt je Kachel die ganze Figur - bei 40 Outfits sind das 200
+ * Vorschaubilder auf einem Bildschirm. Genau das ist die Zahl, die hier gemessen
+ * und nicht angenommen wird.
+ */
+async function seedOutfits(page: Page): Promise<void> {
+  await page.evaluate(
+    async ({ outfitCount, perOutfit, itemCount }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('kleiderschrank')
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+      })
+
+      const tx = db.transaction('outfits', 'readwrite')
+      const outfits = tx.objectStore('outfits')
+
+      for (let i = 0; i < outfitCount; i += 1) {
+        const at = 1_700_000_000_000 + i
+
+        outfits.put({
+          id: `perf-outfit-${i}`,
+          name: `Outfit ${i}`,
+          itemIds: Array.from(
+            { length: perOutfit },
+            (_, n) => `perf-${(i * perOutfit + n) % itemCount}`,
+          ),
+          createdAt: at,
+          updatedAt: at,
+        })
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve()
+        tx.onerror = () => reject(tx.error)
+      })
+    },
+    { outfitCount: OUTFIT_COUNT, perOutfit: ITEMS_PER_OUTFIT, itemCount: ITEM_COUNT },
+  )
+}
+
 test.describe('Verhalten bei vollem Schrank', () => {
   test.setTimeout(180_000)
 
@@ -204,5 +255,63 @@ test.describe('Verhalten bei vollem Schrank', () => {
     // einem Mac - ein iPhone 12 braucht laenger.
     expect(loadMs).toBeLessThan(30_000)
     expect(tapMs).toBeLessThan(5_000)
+  })
+
+  test(`zeigt ${OUTFIT_COUNT} Outfits, ohne alle Vorschaubilder zu laden`, async ({
+    page,
+  }) => {
+    /*
+     * Die Uebersicht zeigt je Outfit die ganze Figur statt nur dreier Bilder - das
+     * liest sich besser, verschiebt aber die Last. Bei 40 Outfits mit je fuenf
+     * Teilen haengen 200 Bilder im Baum. Ohne Messung waere das eine Behauptung.
+     */
+    const wardrobe = new WardrobePage(page)
+    await wardrobe.open()
+
+    await seedManyItems(page, ITEM_COUNT)
+    await seedOutfits(page)
+    await wardrobe.reload()
+
+    const start = Date.now()
+    const outfits = await wardrobe.showOutfits()
+    await expect(page.getByTestId('outfit-karte')).toHaveCount(OUTFIT_COUNT, {
+      timeout: 60_000,
+    })
+    const loadMs = Date.now() - start
+
+    await expect(outfits.card('Outfit 0')).toBeVisible()
+
+    const gesamt = OUTFIT_COUNT * ITEMS_PER_OUTFIT
+    const decoded = await page.evaluate(
+      () =>
+        [...document.querySelectorAll<HTMLImageElement>('[data-testid="figur-teil"] img')]
+          .filter((img) => img.complete && img.naturalWidth > 0).length,
+    )
+
+    console.log(
+      [
+        '',
+        '--- Messung Outfits ---',
+        `Kacheln:                  ${OUTFIT_COUNT}`,
+        `Teile insgesamt:          ${gesamt}`,
+        `Laden bis alle Kacheln da: ${loadMs} ms`,
+        `Geladene Bilder im DOM:   ${decoded} von ${gesamt}`,
+        '',
+      ].join('\n'),
+    )
+
+    /*
+     * Hier greift eine andere Schranke als bei den Bahnen, und das ist kein
+     * Versehen: auf einem breiten Fenster passen alle 40 Kacheln gleichzeitig auf
+     * den Schirm - `loading="lazy"` hat dort nichts auszulassen. Was die Last
+     * begrenzt, ist der Deckel von drei Teilen je Kachel.
+     *
+     * Ohne ihn waren es gemessen alle 200 auf einmal, jedes 400er-JPEG dekodiert
+     * rund 640 KB. Auf dem iPhone-Fenster kommt die Vorausschau des Browsers dazu:
+     * dort sind es rund 42.
+     */
+    expect(decoded).toBeLessThanOrEqual(OUTFIT_COUNT * PREVIEW_MAX_ITEMS)
+    expect(decoded).toBeLessThan(gesamt)
+    expect(loadMs).toBeLessThan(30_000)
   })
 })

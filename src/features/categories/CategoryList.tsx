@@ -2,7 +2,8 @@ import { useState } from 'react'
 
 import { useWardrobe, useWardrobeStore } from '../../store/StoreProvider.tsx'
 import { selectCategories, selectItemsPerCategory } from '../../store/selectors.ts'
-import type { Category } from '../../entities/category/types.ts'
+import { ALL_SLOTS, SLOT_LABELS, slotFor } from '../../entities/category/slots.ts'
+import type { BodySlot, Category } from '../../entities/category/types.ts'
 import type { Id } from '../../shared/db/ids.ts'
 import { formatTimestamp } from '../../shared/lib/datetime.ts'
 import controls from '../../shared/ui/controls.module.css'
@@ -115,13 +116,37 @@ function CategoryRow({
         </button>
       </div>
 
-      <p className={styles.meta} data-testid="kategorie-geaendert">
-        {itemCount === 0
-          ? 'Noch nicht verwendet'
-          : `${itemCount} ${itemCount === 1 ? 'Stück' : 'Stücke'}`}
-        {' · geändert am '}
-        {formatTimestamp(category.updatedAt)}
-      </p>
+      <div className={styles.metaRow}>
+        {/*
+          Der Trageort bestimmt, in welcher Zeile der Outfit-Figur ein Stueck landet.
+          Steht hier und nicht in der Knopfzeile darueber - die ist auf einem iPhone
+          bereits voll.
+        */}
+        <select
+          className={styles.slotSelect}
+          value={slotFor(category)}
+          aria-label={`Trageort von ${category.name}`}
+          data-testid="kategorie-trageort"
+          data-slot={slotFor(category)}
+          onChange={(event) =>
+            void store.updateCategory(category.id, { slot: event.target.value as BodySlot })
+          }
+        >
+          {ALL_SLOTS.map((slot) => (
+            <option key={slot} value={slot}>
+              {SLOT_LABELS[slot]}
+            </option>
+          ))}
+        </select>
+
+        <p className={styles.meta} data-testid="kategorie-geaendert">
+          {itemCount === 0
+            ? 'Noch nicht verwendet'
+            : `${itemCount} ${itemCount === 1 ? 'Stück' : 'Stücke'}`}
+          {' · geändert am '}
+          {formatTimestamp(category.updatedAt)}
+        </p>
+      </div>
 
       {confirming && (
         <div className={controls.confirm} data-testid="kategorie-loesch-bestaetigung">

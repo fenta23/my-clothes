@@ -2,9 +2,9 @@ import { useDraggable } from '@dnd-kit/core'
 
 import type { Category } from '../../entities/category/types.ts'
 import type { ClothingItem } from '../../entities/clothing/types.ts'
-import { IconClothing } from '../../shared/ui/icons.ts'
+import { Thumb } from '../../shared/ui/Thumb.tsx'
+import { useThumbnail } from '../../store/useThumbnail.ts'
 import styles from './ClothingCard.module.css'
-import { useThumbnail } from './useThumbnail.ts'
 
 /**
  * Anzeigegroesse der Vorschau in CSS-Pixeln.
@@ -51,34 +51,18 @@ export function ClothingCard({
       {...listeners}
       {...attributes}
     >
-      {url ? (
-        <img
-          className={styles.photo}
-          src={url}
-          alt=""
-          draggable={false}
-          /*
-           * Entscheidend bei vollem Schrank: ohne diese beiden Angaben laedt und
-           * dekodiert der Browser auch die Bilder, die weit rechts ausserhalb der
-           * Bahn liegen. Gemessen waren das alle 200 auf einmal - jedes 400er-JPEG
-           * belegt dekodiert rund 640 KB, macht ueber 100 MB fuer Bilder, die
-           * niemand sieht.
-           */
-          loading="lazy"
-          decoding="async"
-          width={THUMB_DISPLAY_PX}
-          height={THUMB_DISPLAY_PX}
-        />
-      ) : (
-        /*
-         * Ohne Foto steht das Symbol der Kategorie da - das ist die Angabe des
-         * Nutzers und bleibt ein Emoji. Nur wenn auch die fehlt, kommt ein Icon
-         * der Oberflaeche zum Zug.
-         */
-        <span className={styles.placeholder} aria-hidden="true">
-          {category ? category.emoji : <IconClothing className="icon icon--lg" />}
-        </span>
-      )}
+      {/*
+        Ohne Foto steht das Symbol der Kategorie da - das ist die Angabe des
+        Nutzers und bleibt ein Emoji. Nur wenn auch die fehlt, kommt ein Icon
+        der Oberflaeche zum Zug.
+      */}
+      <Thumb
+        url={url}
+        emoji={category?.emoji}
+        size={THUMB_DISPLAY_PX}
+        className={styles.photo}
+        placeholderClassName={styles.placeholder}
+      />
 
       <span className={styles.caption}>
         {category && (
@@ -106,14 +90,15 @@ export function ClothingCardOverlay({
 
   return (
     <div className={`${styles.card} ${styles.overlay}`} data-testid="drag-overlay">
-      {url ? (
-        // Haengt am Finger und ist damit immer sichtbar - hier waere Aufschieben falsch.
-        <img className={styles.photo} src={url} alt="" draggable={false} decoding="sync" />
-      ) : (
-        <span className={styles.placeholder} aria-hidden="true">
-          {category ? category.emoji : <IconClothing className="icon icon--lg" />}
-        </span>
-      )}
+      {/* Haengt am Finger und ist damit immer sichtbar - hier waere Aufschieben falsch. */}
+      <Thumb
+        url={url}
+        emoji={category?.emoji}
+        size={THUMB_DISPLAY_PX}
+        className={styles.photo}
+        placeholderClassName={styles.placeholder}
+        eager
+      />
       <span className={styles.caption}>
         <span className={styles.name}>{item.title || category?.name || ''}</span>
       </span>

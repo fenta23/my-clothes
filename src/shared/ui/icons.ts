@@ -27,4 +27,6 @@ export {
   Download as IconExport,
   Upload as IconImport,
   RefreshCw as IconUpdate,
+  Check as IconCheck,
+  Sparkles as IconOutfit,
 } from 'lucide-react'
