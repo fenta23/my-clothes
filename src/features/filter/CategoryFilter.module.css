@@ -1,0 +1,31 @@
+.row {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding: var(--sp-1) var(--sp-1) var(--sp-2);
+  scrollbar-width: none;
+
+  /* Eigener waagerechter Scroller - die Seite selbst bleibt gesperrt. */
+  touch-action: pan-x;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: 0 0 auto;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.chipActive {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}

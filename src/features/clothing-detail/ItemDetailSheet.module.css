@@ -1,0 +1,17 @@
+.photo {
+  align-self: center;
+  width: min(66vw, 260px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.actions > * {
+  flex: 1;
+}
