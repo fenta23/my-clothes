@@ -29,10 +29,6 @@
   gap: var(--sp-2);
 }
 
-.sourceIcon {
-  font-size: 1.6rem;
-}
-
 .preview {
   align-self: center;
   width: min(62vw, 240px);

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { IconClose } from '../../shared/ui/icons.ts'
 import styles from './UpdateBanner.module.css'
 
 /**
@@ -50,7 +51,7 @@ export function UpdateBanner({
         data-testid="update-ausblenden"
         onClick={onDismiss}
       >
-        ✕
+        <IconClose className="icon icon--sm" aria-hidden="true" />
       </button>
     </div>
   )

@@ -1,0 +1,29 @@
+/*
+ * Groesse und Strichstaerke der Icons an einer Stelle.
+ *
+ * `stroke-width` als CSS-Eigenschaft statt als Attribut am SVG: Lucide setzt das
+ * Attribut auf 2, und CSS ueberschreibt Praesentationsattribute. So bleibt eine
+ * einheitliche Linienfuehrung ohne sie an jeder Aufrufstelle mitzugeben.
+ *
+ * Die Groesse haengt an `em`, folgt also der Schriftgroesse des Knopfes - damit
+ * skalieren Icons mit, wenn jemand die Systemschrift vergroessert.
+ */
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  stroke-width: 1.75;
+  flex: 0 0 auto;
+}
+
+.icon--sm {
+  width: 1em;
+  height: 1em;
+  stroke-width: 2;
+}
+
+.icon--lg {
+  width: 1.75em;
+  height: 1.75em;
+  stroke-width: 1.5;
+}

@@ -7,6 +7,7 @@ import type { Id } from '../../shared/db/ids.ts'
 import { useObjectUrl } from '../../shared/lib/useObjectUrl.ts'
 import { Sheet } from '../../shared/ui/Sheet.tsx'
 import controls from '../../shared/ui/controls.module.css'
+import { IconCamera, IconGallery } from '../../shared/ui/icons.ts'
 import styles from './AddClothingSheet.module.css'
 import { processImageFile, type ProcessedImage } from './images.ts'
 
@@ -109,9 +110,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
               onClick={() => cameraRef.current?.click()}
               data-testid="foto-aufnehmen"
             >
-              <span className={styles.sourceIcon} aria-hidden="true">
-                📷
-              </span>
+              <IconCamera className="icon icon--lg" aria-hidden="true" />
               Foto aufnehmen
             </button>
 
@@ -121,9 +120,7 @@ export function AddClothingSheet({ onClose }: { onClose: () => void }) {
               onClick={() => galleryRef.current?.click()}
               data-testid="aus-galerie"
             >
-              <span className={styles.sourceIcon} aria-hidden="true">
-                🖼️
-              </span>
+              <IconGallery className="icon icon--lg" aria-hidden="true" />
               Aus Galerie
             </button>
           </div>
